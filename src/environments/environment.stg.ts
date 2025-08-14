@@ -4,9 +4,10 @@ export const environment = {
   uat: false,
   // apiGraphQL: 'https://stg-oxiioffice-api.oxiitek.com/graphql',
   // socketUri: 'https://stg-oxiioffice-api.oxiitek.com',
+  // apiWS: 'wss://oxii-office-api.oxiitek.com/graphql',
   apiGraphQL: 'https://oxii-office-api.smarthiz.com/graphql',
   socketUri: 'https://oxii-office-api.smarthiz.com',
-  apiWS: 'wss://stg-office-api.smarthiz.vn/graphql',
+  apiWS: 'wss://oxii-office-api.smarthiz.com/graphql',
   firebaseConfig: {
     apiKey: "AIzaSyBvTklOwhZpokeEt5Q5U7tImUF94D1xsCI",
     authDomain: "soffice-stag.firebaseapp.com",
