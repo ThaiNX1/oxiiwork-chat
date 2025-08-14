@@ -1,0 +1,79 @@
+<div class="w-full h-full flex flex-column align-items-stretch justify-content-start overflow-auto">
+  @if (routerParameterType() === ChatConversationType.Direct) {
+    <!-- <a class="flex align-items-center justify-content-start border-bottom-1 border-gray-400 p-2 gap-3 no-underline"
+       [routerLink]="['chat/mobile/create-conversation']"
+       [queryParams]="{type: ChatConversationType.Group}">
+      <div class="w-3rem h-3rem border-circle flex align-items-center justify-content-center bg-blue-300">
+        <mat-icon class="text-2xl text-white">groups</mat-icon>
+      </div>
+      <span class="font-semibold">Tạo nhóm chat</span>
+    </a> -->
+  } @else {
+    <div class="flex align-items-center justify-content-start overflow-auto flex-nowrap gap-2 p-2">
+    </div>
+  }
+  <div
+    class="h-full flex-1-custom overflow-auto flex flex-column align-items-stretch justify-content-start overflow-auto">
+    @if (!filterForm.value['keyword']?.length) {
+      <div class="flex-1 flex flex-column align-items-center justify-content-center gap-3">
+        <img src="assets/images/guest/mobile_ic_no_result.svg" class="object-contain">
+        <p class="m-0 text-gray-500">Điền từ khóa vào ô tìm kiếm để tìm </p>
+      </div>
+    } @else {
+      <cdk-virtual-scroll-viewport class="flex-1 border-none gray-500-scroll overflow-auto" itemSize="30">
+        <a *cdkVirtualFor="let item of searchUsers()"
+           [routerLink]="['/guest/chat']"
+           [queryParams]="{receiverId: item.id}"
+           class="flex align-items-center justify-content-start gap-2 p-2 cursor-pointer border-bottom-1 border-gray-400 no-underline">
+          <div class="w-3rem h-3rem border-circle flex align-items-center justify-content-center bg-blue-300">
+            @if (item.imageUrls?.length) {
+              <img class="w-full h-full object-fill border-circle" [src]="item.imageUrls[0]">
+            } @else {
+              <span class="text-white">{{ item.fullname | shortName }}</span>
+            }
+          </div>
+          <div class="flex-1 flex flex-column align-items-stretch justify-content-center gap-1">
+            <p class="text-color">{{ item?.fullname }}</p>
+            <p class="text-gray-500">{{ item.departmentName }} - {{ item.titleName }}</p>
+          </div>
+        </a>
+      </cdk-virtual-scroll-viewport>
+    }
+  </div>
+</div>
+
+<!--Header mobile-->
+<ng-template #headerTemplate>
+  <div class="h-full flex align-items-center justify-content-between px-3">
+    <div class="flex-1 flex align-items-center justify-content-start gap-2">
+      @if (!showFilterForm()) {
+        <a class="bg-transparent border-none flex align-items-center justify-content-center"
+           [routerLink]="['/guest/chat']">
+          <mat-icon class="text-gray-500 text-2xl">keyboard_backspace</mat-icon>
+        </a>
+        <div class="flex-1 flex flex-column align-items-stretch justify-content-start gap-2">
+          <p class="font-semibold">{{newConversationInfo()?.name}}</p>
+        </div>
+      } @else {
+        <form [formGroup]="filterForm">
+          <mat-form-field floatLabel="auto" appearance="outline" class="w-full bg-white">
+            <input matInput placeholder="Tìm kiếm" formControlName="keyword">
+            <mat-icon matSuffix class="text-3xl text-gray-500"
+                      (click)="filterForm.controls['keyword'].reset()">clear
+            </mat-icon>
+          </mat-form-field>
+        </form>
+      }
+    </div>
+    <div class="flex align-items-center justify-content-end">
+      <button class="bg-transparent border-none flex align-items-center justify-content-center"
+              (click)="showFilterForm.set(!showFilterForm())">
+        @if (!showFilterForm()) {
+          <mat-icon class="text-gray-500 text-2xl">search</mat-icon>
+        } @else {
+          <span class="text-blue-300">Hủy</span>
+        }
+      </button>
+    </div>
+  </div>
+</ng-template>

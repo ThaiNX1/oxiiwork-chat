@@ -1,0 +1,17 @@
+<div class="bg-white border-round shadow-3 flex align-items-center justify-content-center">
+  <div class="flex align-items-center justify-content-center p-2">
+    @if (data?.icon?.length) {
+      <img 
+        [src]="data.icon" 
+        class="w-2rem h-2rem border-circle object-fill mx-2"
+        alt=""
+      >
+    } @else {
+      <mat-icon class="text-2xl text-blue-300 mx-2">notifications</mat-icon>
+    }
+  </div>
+  <div class="flex-1 flex flex-column align-items-stretch justify-content-start gap-1 p-2">
+    <p class="m-0 font-semibold break-word text-left">{{ data?.title || 'Thông báo' }}</p>
+    <p class="m-0 break-word text-left">{{ data?.body }}</p>
+  </div>
+</div>

@@ -1,0 +1,94 @@
+# See http://help.github.com/ignore-files/ for more about ignoring files.
+
+# === Build output ===
+/dist
+/tmp
+/out-tsc
+/build
+/.tmp
+/.angular/cache
+/.angular/config.json
+/.next
+/.cache
+/bazel-out
+/test-chat-app
+
+# === Dependencies ===
+/node_modules
+/bower_components
+
+# === Environment files ===
+.env
+.env.*
+.secrets
+
+# === Logs ===
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+/libpeerconnection.log
+/connect.lock
+testem.log
+
+# === IDEs and editors ===
+# VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/*
+
+# Other IDEs
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# === Testing and coverage ===
+/coverage
+.nyc_output/
+jest-test-results.json
+test-results/
+cypress/videos/
+cypress/screenshots/
+
+# === TypeScript ===
+*.tsbuildinfo
+/typings
+*.js
+*.jsx
+*.js.map
+*.d.ts
+*.d.ts.map
+
+# === System Files ===
+.DS_Store
+Thumbs.db
+.AppleDouble
+.LSOverride
+
+# === Misc ===
+/.sass-cache
+*.bak
+*.tmp
+*.swp
+*.swo
+/public/static/
+/public/favicon.ico
+/localhistory/
+.eslintcache
+stylelintcache
+
+# === Profiling files ===
+chrome-profiler-events*.json
+speed-measure-plugin*.json

@@ -1,0 +1,93 @@
+<div class="w-full h-full flex flex-column align-items-stretch justify-content-start bg-gray-500">
+  <div class="flex align-items-center justify-content-end gap-2 p-2">
+    <button class="bg-transparent border-none flex align-items-center justify-content-center"
+      (click)="onCloseDialog()">
+      <mat-icon class="text-white text-3xl">close</mat-icon>
+    </button>
+  </div>
+  @switch (data?.type) {
+    @case (DialogImageViewerType.VIDEO) {
+      <div class="flex-1 flex flex-column align-items-center justify-content-center overflow-auto">
+        <video class="w-full h-full object-contain" [src]="data?.urls?.[imageSelectedIndex] || ''" controls>
+        </video>
+      </div>
+      <div class="flex align-items-center justify-content-between p-2">
+        <div class="flex align-items-end justify-content-end gap-2">
+          <button class="bg-transparent border-none outline-none flex align-items-center justify-content-center"
+            title="Mở trong trình duyệt" 
+            (click)="openInNewTab()">
+            <mat-icon class="text-white text-2xl">open_in_new</mat-icon>
+          </button>
+        </div>
+      </div>
+    }
+    @case (DialogImageViewerType.AUDIO) {
+      <div class="flex-1 flex flex-column align-items-center justify-content-center overflow-auto">
+        <audio class="w-full h-full object-contain" [src]="data?.urls?.[imageSelectedIndex] || ''" controls>
+        </audio>
+      </div>
+      <div class="flex align-items-center justify-content-between p-2">
+        <div class="flex align-items-end justify-content-end gap-2">
+          <button class="bg-transparent border-none outline-none flex align-items-center justify-content-center"
+            title="Mở trong trình duyệt"
+            (click)="openInNewTab()">
+            <mat-icon class="text-white text-2xl">open_in_new</mat-icon>
+          </button>
+        </div>
+      </div>
+    }
+    @case (DialogImageViewerType.IMAGE) {
+      <div class="flex-1 flex flex-column align-items-center justify-content-center overflow-hidden"
+        (mousedown)="onMouseDown($event)"
+        (mousemove)="onMouseMove($event)"
+        (mouseup)="onMouseUp()"
+        (mouseleave)="onMouseLeave()"
+        (touchstart)="onTouchStart($event)"
+        (touchmove)="onTouchMove($event)"
+        (touchend)="onTouchEnd()"
+        (dragstart)="onNativeDragStart($event)">
+        <img #imgEl
+          class="flex-1 object-contain overflow-hidden" alt=""
+          [src]="data?.urls?.[imageSelectedIndex] || ''"
+          [style.transform]="imageTransform"
+          draggable="false"
+          (load)="onImageLoaded()">
+      </div>
+      <div class="flex align-items-center justify-content-between p-2">
+        <div class="flex align-items-center justify-content-start gap-2">
+          @for (url of data?.urls; track url; let i = $index) {
+            <img class="w-3rem h-3rem border-round border-1 object-fill cursor-pointer"
+              [src]="url"
+              alt=""
+              [class.border-green-500]="i === imageSelectedIndex"
+              [class.border-white]="i !== imageSelectedIndex"
+              (click)="imageSelectedIndex = i">
+          }
+        </div>
+        <div class="flex align-items-end justify-content-end gap-2">
+          <button class="bg-transparent border-none outline-none flex align-items-center justify-content-center"
+            (click)="zoomOut()">
+            <mat-icon class="text-white text-2xl">zoom_out</mat-icon>
+          </button>
+          <button class="bg-transparent border-none outline-none flex align-items-center justify-content-center"
+            (click)="zoomIn()">
+            <mat-icon class="text-white text-2xl">zoom_in</mat-icon>
+          </button>
+          <button class="bg-transparent border-none outline-none flex align-items-center justify-content-center"
+            (click)="rotateImage(90)">
+            <mat-icon class="text-white text-2xl">rotate_90_degrees_ccw</mat-icon>
+          </button>
+          <button class="bg-transparent border-none outline-none flex align-items-center justify-content-center"
+            (click)="rotateImage(-90)">
+            <mat-icon class="text-white text-2xl scaleX--1">rotate_90_degrees_ccw</mat-icon>
+          </button>
+          <button class="bg-transparent border-none outline-none flex align-items-center justify-content-center"
+            title="Mở trong trình duyệt"
+            (click)="openInNewTab()">
+            <mat-icon class="text-white text-2xl">open_in_new</mat-icon>
+          </button>
+        </div>
+      </div>
+    }
+  }
+</div>

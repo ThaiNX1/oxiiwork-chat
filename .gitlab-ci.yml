@@ -1,0 +1,110 @@
+image: node:12.18.3
+
+variables:
+  CLI_VERSION: 9.1.6
+  JOB_STAGE: dev
+  FOLDER_BUILD: dist/angular-structure
+stages:
+  - lint
+  - build
+  - deploy
+
+lint:
+  stage: lint
+  script:
+    - npm i
+    - npm run lint
+  tags:
+    - docker
+
+build_dev: 
+  stage: build
+  variables:
+    JOB_STAGE: dev
+    FOLDER_BUILD: dist/angular-structure
+  script:
+    - npm i
+    - npm run build:$JOB_STAGE
+  tags:
+    - docker
+  only:
+    - develop
+  artifacts:
+    paths: 
+      - $FOLDER_BUILD
+
+build_stg: 
+  stage: build
+  variables:
+    JOB_STAGE: stg
+    FOLDER_BUILD: dist/angular-structure
+  script:
+    - npm i
+    - npm run build:$JOB_STAGE
+  tags:
+    - docker
+  only:
+    - staging
+  artifacts:
+    paths: 
+      - $FOLDER_BUILD
+
+deploy_dev: 
+  stage: deploy
+  image: quay.io/coreos/awscli
+  when: manual
+  variables:
+    JOB_STAGE: dev
+    S3_BUCKET: 's3://tecomen-iotp-dev-s3-web-cms/'
+    DISTRIBUTION_ID: E16MHQNRX8WXFM
+    FOLDER_BUILD: dist/angular-structure
+  tags:
+    - docker
+  script:
+    - echo "[profile tecomen_dev]" >> ~/.aws/config
+    - echo "region = $AWS_DEFAULT_REGION" >> ~/.aws/config
+    - echo "output = json" >> ~/.aws/config
+    - echo "[tecomen_dev]" >> ~/.aws/credentials
+    - echo "aws_access_key_id = $AWS_ACCESS_KEY_ID" >> ~/.aws/credentials
+    - echo "aws_secret_access_key = $AWS_SECRET_ACCESS_KEY" >> ~/.aws/credentials
+    - cat ~/.aws/config
+    - cat ~/.aws/credentials
+    - aws s3 rm $S3_BUCKET --recursive --profile tecomen_dev
+    - aws s3 sync $FOLDER_BUILD $S3_BUCKET --profile tecomen_dev
+    - aws configure set preview.cloudfront true 
+    - aws configure set preview.cloudfront true --profile tecomen_dev
+    - aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*" --profile tecomen_dev
+  dependencies:
+    - build_dev
+  only:
+    - develop
+
+deploy_stg: 
+  stage: deploy
+  image: quay.io/coreos/awscli
+  when: manual
+  variables:
+    JOB_STAGE: stg
+    S3_BUCKET: 's3://tecomen-iotp-stg-s3-web-cms/'
+    DISTRIBUTION_ID: E2YBF8J2MSIN7G
+    FOLDER_BUILD: dist/angular-structure
+  tags:
+    - docker
+  script:
+    - echo "[profile tecomen_dev]" >> ~/.aws/config
+    - echo "region = $AWS_DEFAULT_REGION" >> ~/.aws/config
+    - echo "output = json" >> ~/.aws/config
+    - echo "[tecomen_dev]" >> ~/.aws/credentials
+    - echo "aws_access_key_id = $AWS_ACCESS_KEY_ID" >> ~/.aws/credentials
+    - echo "aws_secret_access_key = $AWS_SECRET_ACCESS_KEY" >> ~/.aws/credentials
+    - cat ~/.aws/config
+    - cat ~/.aws/credentials
+    - aws s3 rm $S3_BUCKET --recursive --profile tecomen_dev
+    - aws s3 sync $FOLDER_BUILD $S3_BUCKET --profile tecomen_dev
+    - aws configure set preview.cloudfront true 
+    - aws configure set preview.cloudfront true --profile tecomen_dev
+    - aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*" --profile tecomen_dev
+  dependencies:
+    - build_stg
+  only:
+    - staging

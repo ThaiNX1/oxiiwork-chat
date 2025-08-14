@@ -1,0 +1,12 @@
+mat-expansion-panel-header {
+  height: 45px !important;
+  padding: 0 8px !important;
+}
+
+mat-expansion-panel {
+  .mat-expansion-panel-content {
+    .mat-expansion-panel-body {
+      padding: 0 !important;
+    }
+  }
+}

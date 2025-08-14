@@ -1,0 +1,28 @@
+<div mat-dialog-title class="max-w-28rem min-w-18rem p-3 flex align-items-center justify-content-center">
+  @if (data?.header?.length) {
+    <h3 class="font-bold m-0">{{ (data?.header || '') | translate }}</h3>
+  }
+</div>
+<mat-dialog-content class="px-0">
+  <div class="max-w-28rem min-w-18rem flex flex-wrap align-items-center justify-content-center text-center" [innerHTML]="data?.message"></div>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <div class="w-full flex align-items-center justify-content-center gap-3 pb-2">
+    <button class="py-2 px-5 border-1 border-round bg-white text-blue-300 outline-none"
+            mat-dialog-close>
+      {{ (data?.btnCancel || '') | translate }}
+    </button>
+    @if (data?.btnOK?.length) {
+      <button type="submit" class="py-2 px-5 border-1 border-round bg-blue-300 text-white outline-none" tabindex="0"
+              [mat-dialog-close]="{submit: true}">
+        {{ (data?.btnOK || '') | translate }}
+      </button>
+    }
+    @if (data?.btnDelete?.length) {
+      <button class="py-2 px-5 border-1 border-round bg-red text-white outline-none"
+              [mat-dialog-close]="{delete: true}">
+        {{ (data?.btnDelete || '') | translate }}
+      </button>
+    }
+  </div>
+</mat-dialog-actions>

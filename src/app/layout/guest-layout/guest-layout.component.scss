@@ -1,0 +1,231 @@
+//:host(::ng-deep::-webkit-scrollbar) {
+//  //height: 2px;
+//  width: 5px;
+//  background-color: transparent;
+//  border-radius: 3px;
+//}
+
+//:host(::ng-deep::-webkit-scrollbar-thumb) {
+//  //height: 2px;
+//  width: 4px;
+//  border: 1px solid var(--gray-50);
+//  background-color: var(--gray-400) !important;
+//  border-radius: 3px;
+//}
+//
+//:host(::ng-deep::-webkit-scrollbar-button) {
+//  padding-top: 20px;
+//}
+
+:host(::ng-deep.mat-mdc-tab-body-content) {
+  &::-webkit-scrollbar-thumb {
+    //height: 2px;
+    width: 5px;
+    border: 1px solid #FAFAFA;
+    background-color: #9E9E9E !important;
+    border-radius: 3px;
+  }
+}
+
+.mat-drawer-content {
+  overflow: hidden;
+}
+
+
+.guest-layout {
+  background: rgba(245, 248, 249, 1);
+  // background-image: url('../../../assets/images/guest/background.png');
+  // background-size: 100% 100%;
+  // background-repeat: no-repeat;
+  @media screen and (min-width: 350px) {
+    overflow: hidden;
+  }
+}
+
+.guest-main-content {
+  @media screen and (min-width: 350px) {
+    border-top-left-radius: 0px;
+  }
+  @media screen and (min-width: 1024px) {
+    padding: 0px 16px 16px 16px !important;
+    border-radius: 20px;
+  }
+}
+
+//.guest-mobile-menu{
+//  background-image: url("../../../assets/images/guest/mobile_menu_background.svg");
+//  background-size: 100%;
+//  background-position: bottom;
+//  background-repeat: no-repeat;
+//  background-color: transparent;
+//}
+
+.menu-non-active {
+  width: auto;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  gap: 0.5rem;
+  text-decoration: none;
+  padding: 8px;
+  border-radius: 16px;
+
+  img {
+    width: 30px;
+    aspect-ratio: 1/1;
+    object-fit: fill;
+  }
+
+  span {
+    text-align: center;
+    color: var(--gray-600);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+
+  &:hover {
+    background-color: #0000001a;
+  }
+}
+
+.menu-active {
+  width: auto;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  background-color: #0000001a;
+  padding: 8px;
+  border-radius: 16px;
+
+  img {
+    width: 30px;
+    aspect-ratio: 1/1;
+    object-fit: fill;
+  }
+
+  span {
+    text-align: center;
+    color: var(--gray-600);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+}
+
+.menu-mobile-message {
+  &:before {
+    content: url('../../../assets/images/guest/mobile_menu_message_non_active.svg');
+  }
+
+  z-index: 1 !important;
+
+  p {
+    color: transparent;
+  }
+}
+
+.menu-mobile-message-active {
+  &:before {
+    content: url('../../../assets/images/guest/mobile_menu_message_active.svg');
+  }
+
+  p {
+    color: var(--blue-300) !important;
+  }
+}
+
+.menu-mobile-approval {
+  &:before {
+    content: url('../../../assets/images/guest/mobile_menu_approval_non_active.svg');
+  }
+
+  z-index: 1 !important;
+
+  p {
+    color: transparent;
+  }
+}
+
+.menu-mobile-approval-active {
+  &:before {
+    content: url('../../../assets/images/guest/mobile_menu_approval_active.svg');
+  }
+
+  p {
+    color: var(--blue-300) !important;
+  }
+}
+
+.menu-mobile-home {
+  &:before {
+    content: url('../../../assets/images/guest/mobile_menu_home.svg');
+  }
+
+  z-index: 1 !important;
+
+  p {
+    color: transparent;
+  }
+}
+
+.menu-mobile-home-active {
+  &:before {
+    content: url('../../../assets/images/guest/mobile_menu_home.svg');
+  }
+
+  p {
+    color: var(--blue-300) !important;
+  }
+}
+
+.menu-mobile-document {
+  &:before {
+    content: url('../../../assets/images/guest/mobile_menu_document_non_active.svg');
+  }
+
+  z-index: 1 !important;
+
+  p {
+    color: transparent;
+  }
+}
+
+.menu-mobile-document-active {
+  &:before {
+    content: url('../../../assets/images/guest/mobile_menu_document_active.svg');
+  }
+
+  p {
+    color: var(--blue-300) !important;
+  }
+}
+
+.menu-mobile-profile {
+  &:before {
+    content: url('../../../assets/images/guest/mobile_menu_profile_non_active.svg');
+  }
+
+  z-index: 1 !important;
+
+  p {
+    color: transparent;
+  }
+}
+
+.menu-mobile-profile-active {
+  &:before {
+    content: url('../../../assets/images/guest/mobile_menu_profile_active.svg');
+  }
+
+  p {
+    color: var(--blue-300) !important;
+  }
+}

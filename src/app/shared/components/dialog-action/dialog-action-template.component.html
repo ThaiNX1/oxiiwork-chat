@@ -1,0 +1,30 @@
+<div mat-dialog-title class="max-w-full min-w-18rem p-3 flex align-items-center justify-content-center bg-gray-02">
+  @if (data?.header?.length) {
+    <h4 class="font-semibold m-0 txt-01-color">{{ (data?.header || '') | translate }}</h4>
+  }
+</div>
+<mat-dialog-content>
+  <ng-container [ngTemplateOutlet]="data?.template"></ng-container>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <div class="w-full flex align-items-center justify-content-center gap-3 pb-2">
+    @if (data?.btnCancel?.length) {
+      <button class="py-2 px-5 border-1 border-round bg-white text-blue-300 outline-none"
+              mat-dialog-close>
+        {{ (data?.btnCancel || '') | translate }}
+      </button>
+    }
+    @if (data?.btnOK?.length) {
+      <button type="submit" class="py-2 px-5 border-1 border-round bg-blue-300 text-white outline-none" tabindex="0"
+              (click)="closeEvent.emit({submit: true})">
+        {{ (data?.btnOK || '') | translate }}
+      </button>
+    }
+    @if (data?.btnDelete?.length) {
+      <button class="py-2 px-5 border-1 border-round bg-red-500 text-white outline-none"
+              (click)="closeEvent.emit({delete: true})">
+        {{ (data?.btnDelete || '') | translate }}
+      </button>
+    }
+  </div>
+</mat-dialog-actions>

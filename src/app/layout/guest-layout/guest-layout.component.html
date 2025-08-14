@@ -1,0 +1,263 @@
+<mat-drawer-container class="w-full h-full m-0" [hasBackdrop]="true"
+                      (backdropClick)="onCloseSlideNav()">
+  <mat-drawer #slideNav [mode]="'over'" [position]="slideNavConfig?.position || 'start'"
+              [disableClose]="!!slideNavConfig?.disableClose">
+    <div class="flex flex-column align-items-stretch justify-content-start h-full overflow-hidden">
+      @if (slideNavConfig?.title || !slideNavConfig?.disableClose) {
+        <div class="flex align-items-center justify-content-start gap-3 p-2">
+          @if (slideNavConfig?.title) {
+            <p class="flex-1 text-left font-semibold">{{ slideNavConfig?.title }}</p>
+          }
+          @if (!slideNavConfig?.disableClose) {
+            <mat-icon class="text-3xl" (click)="onCloseSlideNav()">close</mat-icon>
+          }
+        </div>
+      }
+      <div class="flex-1 flex flex-column align-items-stretch justify-content-start overflow-hidden">
+        @if (slideNavConfig?.template) {
+          <ng-container *ngTemplateOutlet="slideNavConfig?.template"></ng-container>
+        }
+      </div>
+    </div>
+  </mat-drawer>
+  <mat-drawer-content>
+    <div
+      class="h-screen flex flex-column md:flex-row align-items-stretch justify-content-start guest-layout">
+      <!-- Side bar -->
+      @if (!isSmallScreen) {
+        <!-- <div class="flex w-5rem flex-column align-items-stretch justify-content-start">
+          <div class="h-5rem flex align-items-center justify-content-center">
+            <img class="w-5rem ratio-16-9" src="assets/images/guest/logo.svg" alt="Company Logo">
+          </div>
+          <div
+            class="flex-1 flex flex-column align-items-stretch justify-content-start overflow-auto p-1 gap-3 gray-400-scroll">
+            @for (route of routes; track route.key) {
+              @if (!route?.children?.length) {
+                <a [routerLink]="[route.path]" class="menu-non-active"
+                   [routerLinkActive]="['menu-active']">
+                  <img class="ratio-square" [src]="route.icon" alt="Menu Icon">
+                  <span>{{ route.title | translate }}</span>
+                </a>
+              }
+            }
+          </div>
+          <div class="flex align-items-center justify-content-center pb-2">
+            <span class="text-color font-semibold text-lg">1.4.68</span>
+          </div>
+        </div> -->
+      }
+      <!-- Header & Content -->
+      <div class="flex-1 flex flex-column align-items-stretch justify-content-start">
+        <div class="h-4rem bg-transparent">
+          @if (isSmallScreen) {
+            @if (slideNavConfig?.headerTemplate) {
+              <ng-container *ngTemplateOutlet="slideNavConfig?.headerTemplate"></ng-container>
+            }
+          } @else {
+            <div class="h-full flex align-items-center justify-content-between">
+              <div class="flex-1 flex align-items-center">
+                <img class="w-10rem ratio-16-9 ml-3" [src]="logoUrl" alt="Company Logo">
+              </div>
+              <div class="flex align-items-center justify-content-end gap-1">
+                <!-- <button
+                  class="p-2 bg-transparent aspect-square border-none text-color min-w-0 flex align-items-center justify-content-center cursor-pointer mr-2 relative">
+                  <mat-icon class="h-auto w-auto text-2xl">notifications</mat-icon>
+                  @if (unreadCount()) {
+                    <div
+                      class="w-18px h-18px border-circle bg-red-500 absolute top-0 right--5px flex align-items-center justify-content-center">
+                      <p class="text-white text-center" style="font-size: 9px !important;">
+                        {{ unreadCount() < 100 ? unreadCount() : '99' }}
+                      </p>
+                    </div>
+                  }
+                </button> -->
+                <div class="flex flex-column align-items-stretch justify-content-center gap-1">
+                  <p class="m-0 font-semibold">{{ user?.officeUser?.fullname }}</p>
+                  <p class="m-0 text-gray-500">{{ user?.officeUser?.titleName }}</p>
+                </div>
+                <button
+                  class="p-2 bg-transparent aspect-square border-none text-color min-w-0 flex align-items-center justify-content-center cursor-pointer"
+                  [matMenuTriggerFor]="menu">
+                  <mat-icon class="h-auto w-auto text-2xl font-semibold">
+                    expand_more
+                  </mat-icon>
+                </button>
+                <mat-menu #menu="matMenu" class="menu-info">
+                  <button type="button" mat-menu-item (click)="handleLogout()">
+                    <em class="fa fa-sign-out icons"></em>
+                    <span>{{ 'MENU_GUEST.LOG_OUT' | translate }}</span>
+                  </button>
+                </mat-menu>
+              </div>
+            </div>
+          }
+        </div>
+        <div class="flex-1 flex-column align-items-stretch justify-content-start bg-transparent guest-main-content overflow-auto ">
+          <router-outlet></router-outlet>
+        </div>
+      </div>
+      <!-- Menu mobile footer -->
+      @if (!commonService.fullScreen() && isSmallScreen) {
+        <!-- <div class="h-4rem flex align-items-center justify-content-center bg-white shadow-4">
+                   <img src="assets/images/guest/mobile_menu_background.svg"
+                        class="w-full object-none absolute bottom-0 left-0 z-0">
+          <a class="flex-1 flex flex-column align-items-center justify-content-start no-underline menu-mobile-message"
+             [routerLink]="['/guest/chat']" [routerLinkActive]="['menu-mobile-message-active']">
+            <p class="m-0">
+              {{ 'MENU_GUEST.MESSENGER' | translate }}
+            </p>
+          </a>
+          <a class="flex-1 flex flex-column align-items-center justify-content-start no-underline menu-mobile-approval"
+             [routerLink]="['/guest/approval']" [routerLinkActive]="['menu-mobile-approval-active']">
+            <p class="m-0">
+              {{ 'MENU_GUEST.APPROVAL' | translate }}
+            </p>
+          </a>
+          <a
+            class="flex-1 flex flex-column align-items-center justify-content-start no-underline menu-mobile-home"
+            [routerLink]="['/guest/home']" [routerLinkActive]="['menu-mobile-home-active']">
+            <p class="m-0">
+              {{ 'MENU_GUEST.HOME' | translate }}
+            </p>
+          </a>
+          <a class="flex-1 flex flex-column align-items-center justify-content-start no-underline menu-mobile-document"
+             [routerLink]="['/guest/document']" [routerLinkActive]="['menu-mobile-document-active']">
+            <p class="m-0">
+              {{ 'MENU_GUEST.DOCUMENT' | translate }}
+            </p>
+          </a>
+          <a class="flex-1 flex flex-column align-items-center justify-content-start no-underline menu-mobile-profile"
+             [routerLink]="['/guest/profile']" [routerLinkActive]="['menu-mobile-profile-active']">
+            <p class="m-0">
+              {{ 'MENU_GUEST.PROFILE' | translate }}
+            </p>
+          </a>
+        </div> -->
+      }
+    </div>
+  </mat-drawer-content>
+</mat-drawer-container>
+<ng-template #notificationTemplate>
+  <div class="w-30rem flex flex-column align-items-stretch justify-content-start gap-3 py-3 px-4 overflow-auto gray-500-scroll">
+    <div class="flex align-items-center justify-content-between">
+      <p class="font-semibold text-xl">{{ 'COMMON.LABEL.NOTI' | translate }}</p>
+      <button class="bg-transparent text-blue-300 border-0">
+        {{ 'COMMON.LABEL.NOTI_MARKED_READ' | translate }}
+      </button>
+    </div>
+    <div class="flex-1 flex flex-column align-items-stretch justify-content-start overflow-auto gap-4">
+      <mat-tab-group class="mat-tab-has-color flex flex-1 flex-column overflow-auto gray-500-scroll"
+                     >
+        <mat-tab *ngFor="let tab of tabs" [label]="tab.name | translate">
+          <ng-template matTabContent>
+            <ng-container *ngTemplateOutlet="notificationContent"></ng-container>
+          </ng-template>
+        </mat-tab>
+      </mat-tab-group>
+    </div>
+    @if (isLoadingNotification()) {
+      <div class="flex align-items-center justify-content-center p-2">
+        <mat-spinner class="absolute top-50 left-50 z-5 w-2rem h-2rem"></mat-spinner>
+      </div>
+    }
+  </div>
+</ng-template>
+<ng-template #notificationContent>
+  <div *ngIf="notifications()?.length > 0"
+       class="flex-1 flex flex-column align-items-stretch justify-content-start overflow-auto gap-4">
+    <ng-container *ngFor="let date of notifications()">
+      <div class="flex flex-column align-items-stretch justify-content-start gap-3">
+        <p class="m-0 font-semibold text-gray-500">{{ date.label | translate}}</p>
+        <div class="flex flex-column align-items-stretch justify-content-start">
+          <ng-container *ngFor="let noti of date.data">
+            <div
+              class="flex flex-column align-items-stretch justify-content-start px-4 py-3 gap-3 hover:bg-gray-100 cursor-pointer">
+              <div class="flex align-items-center justify-content-between">
+                <div class="flex-1 flex align-items-center justify-content-start gap-2">
+                  <mat-icon class="w-2rem"
+                            [ngClass]="noti.isRead ? 'text-gray-400' : 'text-blue-300'">
+                    circle
+                  </mat-icon>
+                  <!--                  <i class="fa fa-circle" aria-hidden="true"-->
+                  <!--                     [class.text-blue-300]="!noti.isRead"-->
+                  <!--                     [class.text-gray-500]="noti.isRead"></i>-->
+                  <span class="font-semibold">{{ noti.title | translate}}</span>
+                </div>
+                <div class="w-5rem flex align-items-center justify-content-end">
+                  <p class="m-0 break-all text-gray-500 font-semibold">{{ noti.createdAt | date:'HH:mm' }}</p>
+                </div>
+              </div>
+              <p class="m-0 break-all">{{ noti.content }}</p>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+    </ng-container>
+    <button class="bg-transparent text-center p-3 text-blue-300 font-semibold border-0">
+      {{ 'COMMON.LABEL.NOTI_LOAD_MORE' | translate }}
+    </button>
+  </div>
+</ng-template>
+
+<!-- Notification detail dialog-->
+<app-dialog-action [isShowDialog]="visibleNotification"
+                   [setting]="notificationDetailSetting"
+                   [showHeader]="false">
+  <div class="flex-1 flex flex-column overflow-auto">
+    <div class="flex-1 flex flex-column align-items-stretch gap-3 px-5 py-3 w-50rem overflow-auto">
+      <p class="m-0 font-bold text-2xl text-left break-all">
+        {{notificationDetail?.title}}
+      </p>
+      <div class="flex align-items-center justify-content-start gap-4">
+        <div class="flex align-items-center justify-content-start gap-2">
+          <img *ngIf="notificationDetail?.sender?.avatar?.location"
+               [src]="notificationDetail?.sender?.avatar?.location"
+               class="w-2rem h-2rem border-circle object-cover"
+               alt="Sender Avatar">
+          <div *ngIf="!notificationDetail?.sender?.avatar?.location"
+               class="w-2rem h-2rem flex align-items-center justify-content-center border-circle bg-gray-400">
+            <mat-icon class="text-gray-500">perm_identity</mat-icon>
+          </div>
+          <span class="font-semibold">{{notificationDetail?.sender?.fullname}}</span>
+        </div>
+        <span class="text-gray-500">{{notificationDetail?.createdAt | date: 'dd-MM-yyyy'}}</span>
+      </div>
+      <ng-container *ngIf="notificationDetail?.images?.length">
+        <img [src]="notificationDetail?.images[0]?.location"
+             class="w-full h-auto max-h-25rem object-cover"
+             alt="Notification Image">
+      </ng-container>
+      <p class="m-0 w-full text-left break-all">
+        {{notificationDetail?.content}}
+      </p>
+      <mat-divider class="w-full"></mat-divider>
+      <ng-container *ngIf="notificationDetail?.attachFiles?.length">
+        <div class="flex flex-column align-items-stretch gap-3">
+          <p class="m-0 font-semibold text-xl">{{ 'COMMON.LABEL.ATTACHMENT' | translate }}</p>
+          <ng-container *ngFor="let item of notificationDetail?.attachFiles">
+            <div class="flex align-items-center justify-content-start gap-3 p-3 bg-gray-100 border-round-lg">
+              <i class="fa fa-file-pdf-o text-red-500 text-2xl" aria-hidden="true"></i>
+              <div class="flex-1 flex flex-column align-items-start justify-content-center gap-2">
+                <span class="font-semibold">{{item.name}}</span>
+                <div class="flex align-items-center justify-content-start gap-2">
+                  <span class="text-gray-500">{{(item.size / 1000000) | number:'1.0'}} MB</span>
+                  <span class="text-gray-500">{{item.createdAt| date:'dd/MM/yyyy HH:mm'}}</span>
+                </div>
+              </div>
+            </div>
+          </ng-container>
+        </div>
+      </ng-container>
+      <ng-container *ngIf="notificationDetail?.images?.length">
+        <div class="flex flex-column align-items-stretch gap-3">
+          <p class="m-0 font-semibold text-xl">{{ 'COMMON.LABEL.IMAGE' | translate }} </p>
+          <ng-container *ngFor="let item of notificationDetail?.images">
+            <div class="w-4rem h-4rem border-round">
+              <img [src]="item.location" class="w-full h-full object-cover border-round" alt="Notification Image">
+            </div>
+          </ng-container>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+</app-dialog-action>

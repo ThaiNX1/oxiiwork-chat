@@ -1,0 +1,1027 @@
+<div class="w-full h-full flex flex-column overflow-auto">
+  <as-split direction="horizontal">
+    <as-split-area [size]="size.filter" [minSize]="10" [maxSize]="20">
+      <div
+        class="h-full hidden md:flex flex-column gap-1 border-none md:border-right-1 border-gray-400 bg-gray-300 p-0 px-2">
+        <ng-container *ngTemplateOutlet="filterList"></ng-container>
+      </div>
+    </as-split-area>
+    <as-split-area [size]="size.list" [minSize]="20" [maxSize]="40">
+      <div
+        class="h-full hidden md:flex flex-column gap-3 overflow-auto border-none md:border-right-1 border-gray-400 px-2">
+        <ng-container *ngTemplateOutlet="approvalList"></ng-container>
+      </div>
+      <ng-container *ngIf="!approvalSelected">
+        <div
+          class="h-full flex md:hidden flex-column gap-3 overflow-auto border-none md:border-right-1 border-gray-400 px-2">
+          <ng-container *ngTemplateOutlet="approvalList"></ng-container>
+        </div>
+      </ng-container>
+    </as-split-area>
+    <as-split-area [size]="size.detail" [minSize]="40" [maxSize]="100" class="flex-1">
+      <ng-container *ngIf="approvalSelected">
+        <div class="h-full pb-0 flex md:hidden flex-column overflow-auto px-4 gap-3" id="printDetail">
+          <ng-container *ngTemplateOutlet="approvalSelectedContent"></ng-container>
+        </div>
+        <!--        <div class="h-full pb-0 hidden md:flex flex-column overflow-auto px-4 gap-3" id="printDetail2">-->
+        <!--          <ng-container *ngTemplateOutlet="approvalSelectedContent"></ng-container>-->
+        <!--        </div>-->
+      </ng-container>
+    </as-split-area>
+  </as-split>
+  <ng-template #filterList>
+    <div class="hidden md:flex align-items-center justify-content-between pt-2">
+      <span class="font-medium text-xl ml-2">Phê duyệt</span>
+      <div class="flex flex-row">
+        <button *ngIf="!selectedFilterObj" style="padding: unset" type="button"
+                class="border-none text-white flex align-items-center justify-content-center bg-white btn-30 mr-2"
+                (click)="onShowFilter()">
+          <img class="btn-30" src="/assets/images/guest/ic_filter_white.svg">
+          <mat-icon [matBadge]="getCheckFilter()" style="width: 0px" [matBadgeHidden]="getCheckFilter() == 0"
+                    matBadgeColor="accent" matBadgeSize="small">
+          </mat-icon>
+        </button>
+        <button (click)="create.click()" type="button"
+                class="border-none bg-blue-300 text-white px-3 flex align-items-center justify-content-center btn-30">
+          <a #create (click)="addApproval()"
+             class="h-3rem font-normal bg-blue-300 border-round-lg flex align-items-center justify-content-center text-white no-underline">
+          </a>
+          <!-- <i class="fa fa-plus" aria-hidden="true"></i> -->
+          <img src="assets/images/guest/ic_plus.svg" style="min-width: 20px;">
+          <span class="white-space-nowrap"></span>
+        </button>
+      </div>
+    </div>
+    <form [formGroup]="filterForm" (ngSubmit)="onSearch()">
+      <div class="flex align-items-center justify-content-start gap-3">
+        <mat-form-field floatLabel="auto" class="flex-1 bg-white border-white filter-input">
+          <i matPrefix class="fa fa-search text-gray-500 px-2" aria-hidden="true"></i>
+          <input matInput placeholder="Tìm kiếm" formControlName="keyword">
+        </mat-form-field>
+      </div>
+    </form>
+    <div class="overflow-y-auto overflow-x-hidden pb-5">
+      <mat-selection-list #tab [multiple]="false"
+                          [hideSingleSelectionIndicator]="true"
+                          (selectionChange)="onTabChange($event)">
+        <mat-list-option class="border-bottom-1 border-gray-400" *ngFor="let tab of tabs; index as i"
+                         [value]="i" [selected]="i == selectedTab?.index"
+                         [ngClass]="i == selectedTab?.index ? 'list-active' : 'list-unactive'">
+          <span class="font-semibold">{{ tab.name }}</span>
+        </mat-list-option>
+      </mat-selection-list>
+      <mat-accordion>
+        <mat-expansion-panel class="bg-transparent panel-filter list-unactive">
+          <mat-expansion-panel-header class="mep-filter">
+            <mat-panel-title>
+              <span class="font-semibold text-base">Bộ lọc cá nhân</span>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <div>
+            <mat-selection-list [multiple]="false" class="h-full">
+              <mat-list-option class="h-full border-bottom-1 border-gray-400 pr-0"
+                               *ngFor="let filter of listFilter; index as i" [value]="filter.id"
+                               [selected]="filter.id == selectedFilterObj?.id" (click)="selectedFilter(filter)"
+                               [ngClass]="filter.id == selectedFilterObj?.id ? 'list-active' : 'list-unactive'">
+                <div class="h-full align-items-center flex justify-content-between"
+                     [title]="filter?.name">
+                                    <span
+                                      class="flex-1 white-space-nowrap overflow-hidden text-overflow-ellipsis font-semibold text-base cursor-pointer">
+                                        {{ filter?.name }}
+                                    </span>
+                  <!-- <button class="min-w-0 h-auto w-2rem bg-transparent border-none"
+                      (click)="onRemoveFilterConfirm(filter.id)">
+                      <img style="min-width: 17px; height: 17px;" src="/assets/images/guest/trash.svg">
+                  </button> -->
+                </div>
+              </mat-list-option>
+            </mat-selection-list>
+          </div>
+        </mat-expansion-panel>
+      </mat-accordion>
+    </div>
+  </ng-template>
+  <ng-template #approvalList>
+    <div class="hidden md:flex flex-column align-items-center justify-content-between pt-3 overflow-auto">
+      <span *ngIf="selectedTab" class="font-medium text-xl">{{ selectedTab?.name }}</span>
+      <span *ngIf="selectedFilterObj" class="font-medium text-xl">{{ selectedFilterObj?.name }}</span>
+      <div *ngIf="selectedFilterObj" class="flex align-items-end justify-content-end">
+        <button class="min-w-0 h-auto bg-transparent border-none" (click)="onUpdateFilter(selectedFilterObj)">
+          <img style="min-width: 16px; height: 16px;" src="/assets/images/guest/ic_pencil.svg">
+        </button>
+        <button class="min-w-0 h-auto bg-transparent border-none"
+                (click)="onRemoveFilterConfirm(selectedFilterObj.id)">
+          <img style="min-width: 16px; height: 16px;" src="/assets/images/guest/trash.svg">
+        </button>
+      </div>
+    </div>
+    <mat-divider></mat-divider>
+    <ng-container *ngTemplateOutlet="content"></ng-container>
+  </ng-template>
+  <ng-template #content>
+    <div id="approvalDIV" (scroll)="onScrollApproval($event)" *ngIf="approvals"
+         class="flex-1 flex flex-column gap-3 overflow-auto overflow-auto pb-3 gray-500-scroll">
+      <ng-container *ngFor="let item of approvals">
+        <div
+          class="h-auto border-1 border-round-lg p-2 flex flex-column align-items-stretch justify-content-between cursor-pointer column-gap-5"
+          [class.border-gray-400]="approvalSelected?.id !== item.id"
+          [style.background-color]="item.isRead ? 'white' : '#F5F9FF'"
+          [class.border-blue-300]="approvalSelected?.id === item.id"
+          (click)="onSelectItemApproval(item.id, item.status); item.isRead = true">
+          <div class="flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="w-8rem py-1 flex align-items-center justify-content-center border-round mb-2 mr-2"
+                 [style]="{'background-color': item.statusColor, 'color':item.statusTextColor}">
+              <span class="break-word text-sm">{{ item.statusText }}</span>
+            </div>
+            <div *ngIf="selectedTab?.value == ApprovalOwnerStatus.Draft || item.status == ApprovalOwnerStatus.Draft"
+                 class="flex align-items-end justify-content-end mb-2 mr-2">
+              <button class="min-w-0 h-auto bg-transparent border-none"
+                      (click)="onSelectApproval(item.id, item.status)">
+                <img style="min-width: 16px; height: 16px;"
+                     src="../../../../../assets/images/guest/ic_pencil.svg">
+                <!-- <i class="fa fa-pencil text-gray-500" aria-hidden="true"></i> -->
+              </button>
+              <button class="min-w-0 h-auto bg-transparent border-none"
+                      (click)="onRemoveDraftConfirm(item.id)">
+                <img style="min-width: 16px; height: 16px;"
+                     src="../../../../../assets/images/guest/trash.svg">
+                <!-- <i class="fa fa-trash text-gray-500" aria-hidden="true"></i> -->
+              </button>
+            </div>
+          </div>
+          <div class="flex align-items-center justify-content-start gap-2 overflow-hidden">
+            <ng-container [ngSwitch]="approvalFilter.type">
+              <ng-container *ngSwitchCase="ApprovalType.CarBooking">
+                <div class="border-circle h-8px w-8px"
+                     [style.background-color]="item?.carBookingRequest?.car?.color">
+                </div>
+                <span class="font-normal overflow-hidden white-space-nowrap text-overflow-ellipsis"
+                      [title]="item?.carBookingRequest?.car?.model + '-' + item?.carBookingRequest?.car?.plateNumber">
+                                    {{ item?.carBookingRequest?.car?.model }}
+                  - {{ item?.carBookingRequest?.car?.plateNumber }}
+                                </span>
+              </ng-container>
+              <ng-container *ngSwitchCase="ApprovalType.RoomBooking">
+                <div class="border-circle h-8px w-8px"
+                     [style.background-color]="item?.roomBookingRequest?.room?.color">
+                </div>
+                <span class="font-normal overflow-hidden white-space-nowrap text-overflow-ellipsis"
+                      [title]="item?.roomBookingRequest?.meetingContent">
+                                    {{ item?.roomBookingRequest?.meetingContent }}
+                                </span>
+              </ng-container>
+              <ng-container *ngSwitchCase="ApprovalType.OfficeShopping">
+                <p class="m-0 font-normal overflow-hidden white-space-nowrap text-overflow-ellipsis"
+                   [title]="item?.shoppingRequest?.name">
+                  {{ item?.shoppingRequest?.name }}
+                </p>
+              </ng-container>
+              <ng-container *ngSwitchDefault>
+                <p [innerHTML]="item.name | highlight: searchTerm" [class]="selectedTab?.value === ApprovalOwnerStatus.Submitted
+                            ? 'm-0 mb-2 text-sm title-detail overflow-hidden white-space-nowrap text-overflow-ellipsis'
+                            : 'm-0 mb-2 text-sm title-detail break-word'">
+                </p>
+              </ng-container>
+            </ng-container>
+          </div>
+          <div class="flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="flex flex-row align-items-center gap-2">
+              <img width="20px" height="20px" class="border-circle object-fill"
+                   [src]="item.requester?.requesterAvatar">
+              <div class="flex align-items-start justify-content-start gap-2">
+                <div class="flex align-items-center justify-content-start gap-3 mt-1">
+                                    <span class="text-sm mb-1"
+                                          [innerHTML]="item.requester?.fullname | highlight: searchTerm"></span>
+                </div>
+              </div>
+            </div>
+            <div class="flex align-items-end justify-content-center gap-2 flex-wrap">
+                            <span class="text-gray-500 text-sm">
+                                {{ item.createdAt | date: 'HH:mm dd/MM/yyyy' }}
+                            </span>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+  </ng-template>
+  <ng-template #approvalSelectedContent>
+    <div class="flex justify-content-between mt-4">
+      <div class="w-8rem py-1 flex align-items-center justify-content-center border-round"
+           [style]="{'background-color': approvalSelected?.statusColor, 'color':approvalSelected?.statusTextColor}">
+        <span>{{ approvalSelected?.statusText }}</span>
+      </div>
+      <div class="flex flex-row">
+        <button
+          *ngIf="approvalSelected.type !== ApprovalType.CarBooking && approvalSelected.type !== ApprovalType.RoomBooking && approvalSelected.type !== ApprovalType.OfficeShopping && approvalSelected.status !== ApprovalStatus.Forward"
+          class="bg-transparent border-0 btn-30" matTooltip="Chuyển tiếp" (click)="forward()"><img
+          class="cursor-pointer" src="assets/images/guest/ic_forward.svg" style="min-width: 30px;margin-top: 5px;">
+        </button>
+        <button class="bg-transparent border-0 btn-30" ngxPrint printSectionId="printDetail" [useExistingCss]="true">
+          <mat-icon class="cursor-pointer text-gray-500" matTooltip="In">print</mat-icon>
+        </button>
+        <button class="bg-transparent border-0 btn-30" *ngIf="size.detail < 100" matTooltip="Phóng to"
+                (click)="size.detail = 100; size.filter = 0; size.list = 0">
+          <mat-icon class="cursor-pointer text-gray-500">fullscreen</mat-icon>
+        </button>
+        <button class="bg-transparent border-0 btn-30" *ngIf="size.detail == 100" matTooltip="Thu nhỏ"
+                (click)="size.detail = 60; size.filter = 15; size.list = 25">
+          <mat-icon class="cursor-pointer text-gray-500">fullscreen_exit</mat-icon>
+        </button>
+      </div>
+    </div>
+    <div class="flex align-items-center justify-content-between md:justify-content-start gap-0 md:gap-5">
+      <ng-container [ngSwitch]="approvalSelected.type">
+        <ng-container *ngSwitchCase="ApprovalType.CarBooking">
+          <div class="flex-1 flex align-items-center justify-content-start gap-2">
+            <div class="border-circle h-1rem w-1rem"
+                 [style.background-color]="approvalSelected?.carBookingRequest?.car?.color">
+            </div>
+            <span class="flex-1 font-semibold  text-2xl">
+                            {{ approvalSelected?.carBookingRequest?.car?.model }}
+              - {{ approvalSelected?.carBookingRequest?.car?.plateNumber }}
+                        </span>
+          </div>
+        </ng-container>
+        <ng-container *ngSwitchCase="ApprovalType.RoomBooking">
+          <div class="flex-1 flex align-items-center justify-content-start gap-2">
+            <div class="border-circle h-1rem w-1rem"
+                 [style.background-color]="approvalSelected?.roomBookingRequest?.room?.color">
+            </div>
+            <span [innerHTML]="approvalSelected?.roomBookingRequest?.meetingContent | highlight: searchTerm"
+                  class="flex-1 font-medium text-2xl">
+                        </span>
+          </div>
+        </ng-container>
+        <ng-container *ngSwitchCase="ApprovalType.OfficeShopping">
+                    <span [innerHTML]="approvalSelected?.name | highlight: searchTerm"
+                          class="font-medium text-2xl">{{ approvalSelected?.name }}</span>
+        </ng-container>
+        <ng-container *ngSwitchDefault>
+                    <span [innerHTML]="approvalSelected?.name | highlight: searchTerm"
+                          class="font-medium text-2xl"></span>
+        </ng-container>
+      </ng-container>
+
+    </div>
+    <ng-container [ngSwitch]="approvalSelected.type">
+      <ng-container *ngSwitchCase="ApprovalType.RoomBooking">
+        <div class="flex align-items-center justify-content-between md:justify-content-start gap-0 md:gap-5">
+          <div class="flex align-items-center justify-content-start gap-2">
+            <img width="20px" height="20px" class="border-circle object-fill"
+                 [src]="approvalSelected?.requester?.requesterAvatar">
+            <span [innerHTML]="approvalSelected?.requester?.fullname | highlight: searchTerm"></span> |
+            <span>{{ approvalSelected?.requester?.departments[0]?.department?.name }}</span> |
+            <span>{{ approvalSelected?.requester?.departments[0]?.title?.name }}</span>
+          </div>
+          <!-- <span class="text-gray-500">
+                  {{approvalSelected?.createdAt | date: 'dd/MM/yyyy'}}
+              </span> -->
+        </div>
+        <p class="text-sm text-gray-500 m-0">
+          {{ approvalSelected?.bookingRoomDayOfStartAt }}{{
+            approvalSelected?.roomBookingRequest?.startAt
+              |date:'HH:mm dd/MM/yyyy'
+          }}
+          -
+          {{ approvalSelected?.bookingRoomDayOfEndAt }}{{
+            approvalSelected?.roomBookingRequest?.endAt
+              |date:'HH:mm dd/MM/yyyy'
+          }}
+        </p>
+        <!-- <div *ngIf="approvalSelected?.roomBookingRequest?.repeatedDays?.length" class="flex align-items-center">
+                <p class="m-0">
+                    Hàng tuần vào {{approvalSelected.bookingRoomRemindName}}
+                    cho tới ngày {{approvalSelected?.roomBookingRequest?.repeatedEndAt | date:'dd/MM/yyyy'}}
+                </p>
+            </div> -->
+      </ng-container>
+      <ng-container *ngSwitchCase="ApprovalType.CarBooking">
+        <div class="flex align-items-center justify-content-between md:justify-content-start gap-0 md:gap-5">
+          <div class="flex align-items-center justify-content-start gap-2">
+            <img width="20px" height="20px" class="border-circle object-fill"
+                 [src]="approvalSelected?.requester?.requesterAvatar">
+            <span [innerHTML]="approvalSelected?.requester?.fullname | highlight: searchTerm"></span> |
+            <span>{{ approvalSelected?.requester?.departments[0]?.department?.name }}</span> |
+            <span>{{ approvalSelected?.requester?.departments[0]?.title?.name }}</span>
+          </div>
+          <!-- <span class="text-gray-500">
+                  {{approvalSelected?.createdAt | date: 'dd/MM/yyyy'}}
+              </span> -->
+        </div>
+        <p class="text-sm text-gray-500 m-0">
+          {{ approvalSelected?.bookingCarDayOfStartAt }}{{
+            approvalSelected?.carBookingRequest?.startAt |
+              date:'HH:mm dd/MM/yyyy'
+          }}
+          -
+          {{ approvalSelected?.bookingCarDayOfEndAt }}{{
+            approvalSelected?.carBookingRequest?.endAt |
+              date:'HH:mm dd/MM/yyyy'
+          }}
+        </p>
+      </ng-container>
+      <ng-container *ngSwitchCase="ApprovalType.OfficeShopping">
+        <div class="flex align-items-center justify-content-between md:justify-content-start gap-0 md:gap-5">
+          <div class="flex align-items-center justify-content-start gap-2">
+            <img width="20px" height="20px" class="border-circle object-fill"
+                 [src]="approvalSelected?.requester?.requesterAvatar">
+            <span [innerHTML]="approvalSelected?.requester?.fullname | highlight: searchTerm"></span> |
+            <span>{{ approvalSelected?.requester?.departments[0]?.department?.name }}</span> |
+            <span>{{ approvalSelected?.requester?.departments[0]?.title?.name }}</span>
+          </div>
+          <span class="text-gray-500">
+                        {{ approvalSelected?.createdAt | date: 'dd/MM/yyyy' }}
+                    </span>
+        </div>
+        <div class="flex align-items-center justify-content-start gap-3">
+          <p class="font-bold">
+            Chi phí dự kiến (VNĐ): {{ approvalSelected?.shoppingRequest?.expectedCost | number }}
+          </p>
+        </div>
+      </ng-container>
+      <ng-container *ngSwitchDefault>
+        <div *ngIf="approvalSelected.status != ApprovalStatus.Forward"
+             class="flex align-items-center justify-content-between md:justify-content-start gap-0 md:gap-5">
+          <div class="flex align-items-center justify-content-start gap-2">
+            <img width="20px" height="20px" class="border-circle object-fill"
+                 [src]="approvalSelected?.requester?.requesterAvatar">
+            <span [innerHTML]="approvalSelected?.requester?.fullname | highlight: searchTerm"></span> |
+            <span>{{ approvalSelected?.requester?.departments[0]?.department?.name }}</span> |
+            <span>{{ approvalSelected?.requester?.departments[0]?.title?.name }}</span>
+          </div>
+        </div>
+        <div
+          *ngIf="(approvalSelected.status == ApprovalStatus.Forward && approvalSelected?.forward?.createdBy != userLogin.id)"
+          class="flex align-items-center justify-content-between md:justify-content-start gap-0 md:gap-5">
+          <div class="flex align-items-center justify-content-start gap-2">
+            <img width="20px" height="20px" class="border-circle object-fill"
+                 [src]="approvalSelected?.forward?.creator?.imageUrls ? approvalSelected?.forward?.creator?.imageUrls[0] : '/assets/images/guest/ic_user_default.svg'">
+            <span [innerHTML]="approvalSelected?.forward?.creator?.fullname | highlight: searchTerm"></span> |
+            <span>{{ approvalSelected?.forward?.creator?.departments[0]?.department?.name }}</span> |
+            <span>{{ approvalSelected?.forward?.creator?.departments[0]?.title?.name }}</span>
+          </div>
+        </div>
+        <p class="text-sm text-gray-500 m-0">
+          {{ approvalSelected?.code }} | Ngày tạo: {{ approvalSelected?.createdAt | date: 'HH:mm dd/MM/yyyy' }}
+        </p>
+      </ng-container>
+    </ng-container>
+    <mat-divider class="w-full"></mat-divider>
+    <div class="flex-1 flex flex-column align-items-stretch justify-content-start overflow-auto pb-3">
+      <div
+        *ngIf="approvalSelected?.status == ApprovalStatus.Forward && approvalSelected?.forward?.createdBy == userLogin.id"
+        class="flex flex-column bg-blue-50 p-3 border-round-lg gap-1">
+        <span class="font-semibold text-base line-height-3">{{ approvalSelected?.forward?.originApproval?.name }}</span>
+        <span (click)="onSelectItemApproval(approvalSelected?.forward?.originApproval?.id, approvalSelected?.status)"
+              class="font-semibold text-base text-primary line-height-3 cursor-pointer">Xem phê duyệt gốc</span>
+      </div>
+      <div
+        *ngIf="approvalSelected?.status == ApprovalStatus.Forward && approvalSelected?.forward?.createdBy == userLogin.id"
+        class="flex flex-column bg-blue-100 p-3 border-round-lg border-noround-bottom gap-3 mt-2 pb-0">
+        <div>
+          <span class="font-semibold text-base line-height-3">Chuyển tiếp tới</span>
+          <span class="font-normal text-sm text-primary line-height-3 font-italic ml-2">Chọn vào từng tài khoản để biết nội dung mà bạn chuyển tiếp</span>
+        </div>
+        <mat-tab-group mat-align-tabs="start" class="mat-tab-active-white" [color]="'primary'"
+                       (selectedTabChange)="changeUser($event)">
+          <mat-tab *ngFor="let tab of approvalSelected?.forward?.users">
+            <ng-template mat-tab-label>
+              <div class="flex flex-row align-items-center gap-2">
+                <img width="24px" height="24px" class="border-circle object-fill" style="min-width: 24px;"
+                     [src]="tab.user?.imageUrls ? tab.user?.imageUrls[0] : '/assets/images/guest/ic_user_default.svg'">
+                <div class="flex align-items-start justify-content-start gap-2">
+                  <div class="flex align-items-center justify-content-start gap-3 mt-1">
+                                        <span class="text-base mb-1"
+                                              [innerHTML]="tab.user?.fullname | highlight: searchTerm"></span>
+                  </div>
+                </div>
+              </div>
+            </ng-template>
+          </mat-tab>
+        </mat-tab-group>
+      </div>
+      <mat-accordion [multi]="true" [togglePosition]="'before'">
+        <!-- Chi tiết -->
+        <mat-expansion-panel *ngIf="isShowContent[1].show" [expanded]=true class="unset-p">
+          <mat-expansion-panel-header [@.disabled]="true">
+            <mat-panel-title class="title-detail">Chi tiết</mat-panel-title>
+          </mat-expansion-panel-header>
+          <div class="flex flex-column align-items-stretch justify-content-start gap-1">
+            <ng-container [ngSwitch]="approvalSelected?.type">
+              <ng-container *ngSwitchCase="ApprovalType.CarBooking">
+                <div class="flex flex-column md:flex-row gap-1">
+                                    <span class="text-gray-500 font-normal w-full md:w-13rem">
+                                        Mã phê duyệt
+                                    </span>
+                  <span class="text-lg">{{ approvalSelected?.carBookingRequest?.code }}</span>
+                </div>
+                <div class="flex flex-column md:flex-row gap-1">
+                                    <span class="text-gray-500 font-normal w-full md:w-13rem">
+                                        Model xe
+                                    </span>
+                  <span class="text-lg">{{ approvalSelected?.carBookingRequest?.car?.model }}</span>
+                </div>
+                <div class="flex flex-column md:flex-row gap-1">
+                                    <span class="text-gray-500 font-normal w-full md:w-13rem">
+                                        Biển số
+                                    </span>
+                  <span
+                    class="text-lg">{{ approvalSelected?.carBookingRequest?.car?.plateNumber }}</span>
+                </div>
+                <div class="flex flex-column md:flex-row gap-1">
+                                    <span class="text-gray-500 font-normal w-full md:w-13rem">
+                                        Điểm đi
+                                    </span>
+                  <span class="text-lg">{{ approvalSelected?.carBookingRequest?.fromAddress }}</span>
+                </div>
+                <div class="flex flex-column md:flex-row gap-1">
+                                    <span class="text-gray-500 font-normal w-full md:w-13rem">
+                                        Điểm đến
+                                    </span>
+                  <span class="text-lg">{{ approvalSelected?.carBookingRequest?.toAddress }}</span>
+                </div>
+                <div class="flex flex-column md:flex-row gap-1">
+                                    <span class="text-gray-500 font-normal w-full md:w-13rem">
+                                        Ghi chú
+                                    </span>
+                  <span class="text-lg"
+                        [innerHTML]="approvalSelected?.carBookingRequest?.note | highlight: searchTerm"></span>
+                </div>
+              </ng-container>
+              <ng-container *ngSwitchCase="ApprovalType.RoomBooking">
+                <div class="flex flex-column md:flex-row gap-1">
+                                    <span class="text-gray-500 font-normal w-full md:w-13rem">
+                                        Mã phê duyệt
+                                    </span>
+                  <span class="text-lg">{{ approvalSelected?.roomBookingRequest?.code }}</span>
+                </div>
+                <div class="flex flex-column md:flex-row gap-1">
+                                    <span class="text-gray-500 font-normal w-full md:w-13rem">
+                                        Phòng họp
+                                    </span>
+                  <span class="text-lg">{{ approvalSelected?.roomBookingRequest?.room?.name }}</span>
+                </div>
+                <div class="flex flex-column md:flex-row gap-1">
+                                    <span class="text-gray-500 font-normal w-full md:w-13rem">
+                                        Người chủ trì
+                                    </span>
+                  <div class="flex align-items-center justify-content-start gap-2">
+                                        <span class="text-lg"
+                                              [innerHTML]="approvalSelected?.roomBookingRequest?.host?.fullname | highlight: searchTerm"></span>
+                    -
+                    <span [innerHTML]="approvalSelected?.hostTitle | highlight: searchTerm"
+                          class="text-gray-500 text-lg"></span>
+                  </div>
+                </div>
+                <div class="flex flex-column md:flex-row gap-1">
+                                    <span class="text-gray-500 font-normal w-full md:w-13rem">
+                                        Số lượng
+                                    </span>
+                  <span
+                    class="text-lg">{{ approvalSelected?.roomBookingRequest?.participants?.length }}</span>
+                </div>
+                <div class="flex flex-column md:flex-row gap-1">
+                                    <span class="text-gray-500 font-normal w-full md:w-13rem">
+                                        Người tham dự
+                                    </span>
+                  <div class="flex align-items-start justify-content-start gap-3">
+                    <ng-container
+                      *ngFor="let item of approvalSelected?.roomBookingRequest?.participants">
+                                            <span [innerHTML]="item?.fullname | highlight: searchTerm"
+                                                  class="p-1 bg-gray-100 border-round text-lg"></span>
+                    </ng-container>
+                  </div>
+                </div>
+                <div class="flex flex-column md:flex-row gap-1">
+                                    <span class="text-gray-500 font-normal w-full md:w-13rem">
+                                        Thiết bị
+                                    </span>
+                  <span class="text-lg">{{ approvalSelected?.equimentsName }}</span>
+                </div>
+                <div class="flex flex-column md:flex-row gap-1">
+                                    <span class="text-gray-500 font-normal w-full md:w-13rem">
+                                        Hậu cần
+                                    </span>
+                  <span class="text-lg">{{ approvalSelected?.logisticsName }}</span>
+                </div>
+                <div class="flex flex-column md:flex-row gap-1">
+                                    <span class="text-gray-500 font-normal w-full md:w-13rem">
+                                        Ghi chú
+                                    </span>
+                  <span class="text-lg"
+                        [innerHTML]="approvalSelected?.roomBookingRequest?.note | highlight: searchTerm"></span>
+                </div>
+              </ng-container>
+              <ng-container *ngSwitchCase="ApprovalType.OfficeShopping">
+                <div class="flex flex-column md:flex-row gap-1">
+                                    <span class="text-gray-500 font-normal w-full md:w-13rem">
+                                        Mã phê duyệt
+                                    </span>
+                  <span class="text-lg">{{ approvalSelected?.shoppingRequest?.code }}</span>
+                </div>
+              </ng-container>
+            </ng-container>
+            <ng-container *ngFor="let field of approvalSelected?.fields">
+              <div class="flex align-items-baseline"
+                   [class.flex-row]="field.dataType !== DataTypeEnum.Table"
+                   [class.flex-column]="field.dataType === DataTypeEnum.Table">
+                                <span [innerHTML]="field.name | highlight: searchTerm"
+                                      class="font-normal col-3 md:col-3 pb-2 pl-0"
+                                      [class.text-gray-500]="field.dataType !== DataTypeEnum.Table"
+                                      [class.uppercase]="field.dataType === DataTypeEnum.Table">
+                                </span>
+                <ng-container [ngSwitch]="field.dataType">
+                  <ng-container *ngSwitchCase="DataTypeEnum.Date">
+                    <span>{{ field.dateValue | date:'dd/MM/yyyy' }}</span>
+                  </ng-container>
+                  <ng-container *ngSwitchCase="DataTypeEnum.List">
+                    <span>{{ field.listValues?.join(',') }}</span>
+                  </ng-container>
+                  <ng-container *ngSwitchCase="DataTypeEnum.Text">
+                    <span class="pre-wrap-text">{{ field.textValue }}</span>
+                  </ng-container>
+                  <ng-container *ngSwitchCase="DataTypeEnum.Text_Area">
+                    <div [innerHTML]="field.textValue"></div>
+                  </ng-container>
+                  <ng-container *ngSwitchCase="DataTypeEnum.Text_Html">
+                    <!--                    <app-content-html [html]="field.textValue"-->
+                    <!--                                      class="overflow-auto"></app-content-html>-->
+                  </ng-container>
+                  <ng-container *ngSwitchCase="DataTypeEnum.Table">
+                    <div
+                      class="w-full flex flex-column align-items-stretch justify-content-start overflow-auto">
+                      <div class="flex align-items-center justify-content-start">
+                        <p
+                          class="m-0 bg-gray-100 text-left py-3 min-w-5 w-5rem font-medium border-bottom-1 border-gray-400 pl-2">
+                          Chọn
+                        </p>
+                        <ng-container *ngFor="let header of field.tableColumns">
+                          <p
+                            class="m-0 bg-gray-100 text-left py-3 min-w-13 w-13rem font-medium border-bottom-1 border-gray-400">
+                            {{ header }}
+                          </p>
+                        </ng-container>
+                      </div>
+                      <ng-container *ngFor="let row of field.tableRows">
+                        <div class="w-full flex align-items-stretch justify-content-start">
+                          <div
+                            class=" min-w-5 w-5rem flex align-items-center justify-content-start border-bottom-1 border-gray-400 py-2 pl-2">
+                            <mat-checkbox [(ngModel)]="row.checked"
+                                          [ngModelOptions]="{standalone: true}"
+                                          [disabled]="row.disabled">
+                            </mat-checkbox>
+                          </div>
+                          <ng-container *ngFor="let _data of row.data">
+                            <div
+                              class="bg-transparent min-w-13 w-13rem border-bottom-1 border-gray-400 flex align-items-center justify-content-start">
+                              <p class="m-0 break-word">{{ _data.textValue }}</p>
+                            </div>
+                          </ng-container>
+                        </div>
+                      </ng-container>
+                    </div>
+                  </ng-container>
+                </ng-container>
+              </div>
+            </ng-container>
+            <ng-container *ngIf="approvalSelected?.type == ApprovalType.Other">
+              <div class="flex flex-column md:flex-row gap-1" (mouseenter)="showUpdateSub = true"
+                   (mouseleave)="showUpdateSub = false">
+                                <span class="text-gray-500 font-medium col-3 md:col-3 pl-0 py-2">
+                                    Người theo dõi
+                                </span>
+                <div (mouseenter)="showUpdateSub = true" (mouseleave)="showUpdateSub = false"
+                     class="py-3 grid align-items-center justify-content-start gap-1"
+                     *ngIf="!isUpdateSubscribers">
+                  <ng-container *ngFor="let item of approvalSelected?.subcribers">
+                    <div
+                      class="flex justify-content-between bg-gray-100">
+                                            <span [title]="item?.fullname"
+                                                  [innerHTML]="item?.fullname | highlight: searchTerm"
+                                                  class="flex align-items-center  justify-content-center mr-2 p-1 text-base text-overflow-ellipsis overflow-hidden white-space-nowrap"></span>
+                      <div *ngIf="(approvalSelected?.status != ApprovalStatus.Forward)"
+                           class="cursor-pointer flex align-items-center justify-content-center">
+                        <img (click)="removeSubcribers(item)" height="12px" width="12px"
+                             class="mr-2" src="/assets/images/ic_close.svg">
+                      </div>
+                    </div>
+                  </ng-container>
+                  <ng-container
+                    *ngIf="(!isUpdateSubscribers || !approvalSelected?.subcribers || approvalSelected?.subcribers?.length == 0) && (approvalSelected?.status != ApprovalStatus.Forward)">
+                    <i (click)="isUpdateSubscribers = true" title="Thêm người theo dõi"
+                       class="fa fa-plus cursor-pointer text-blue-500 ml-2" aria-hidden="true"></i>
+                    <span (click)="isUpdateSubscribers = true" class="cursor-pointer text-blue-500">Thêm người</span>
+                  </ng-container>
+                </div>
+                <div class="flex flex-column align-items-end justify-content-center gap-1 w-full"
+                     *ngIf="isUpdateSubscribers">
+                  <!--                  <multiple-select-search class="w-full" [formControl]="subscriberIdsCtr"-->
+                  <!--                                          [placeholder]="'Người theo dõi'" [datasource]="[]" [page]="0" [size]="10"-->
+                  <!--                                          [valueKey]="'id'" [labelKey]="'optionTitle'"-->
+                  <!--                                          [apiPath]="'management.employeeOfficeList'"-->
+                  <!--                                          [apiObjResponseKey]="'officeListEmployeeOfOrgChart'"-->
+                  <!--                                          [apiObjDataSourceKey]="'officeUsers'">-->
+                  <!--                  </multiple-select-search>-->
+                  <div class="flex flex-row justify-content-end gap-1">
+                    <ng-container>
+                      <button mat-raised-button (click)="onSubmitCC()" class="btn-30 bg-white">
+                        <img height="18px" width="18px"
+                             src="/assets/images/guest/ic_check_blue.svg">
+                      </button>
+                    </ng-container>
+                    <ng-container>
+                      <button (click)="isUpdateSubscribers = false" mat-button color="primary"
+                              class="btn-30 bg-white">
+                        <img height="12px" width="12px" src="/assets/images/ic_close.svg">
+                      </button>
+                    </ng-container>
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+            <div class="flex flex-column align-items-stretch justify-content-start gap-2">
+              <div *ngIf="approvalSelected.attachmentUrls?.length"
+                   class="bg-white border-round py-3 flex flex-column align-items-stretch gap-3">
+                <span class="font-medium text-lg">Tệp đính kèm</span>
+                <ng-container *ngFor="let file of approvalSelected.attachmentFiles; let i=index">
+                  <div
+                    class="flex align-items-center justify-content-between border-round-lg bg-gray-100 p-3">
+                    <a [href]="file.url" target="_blank"
+                       class="flex align-items-center justify-content-start gap-3 no-underline text-blue-300 font-medium">
+                      <i class="fa fa-file-pdf-o text-red-500" aria-hidden="true"></i>
+                      <span>{{ file.name }}</span>
+                    </a>
+                  </div>
+                </ng-container>
+              </div>
+              <div *ngIf="approvalSelected.imageUrls?.length"
+                   class="bg-white border-round flex flex-column align-items-stretch gap-2">
+                <span class="font-medium text-lg">Ảnh</span>
+                <div class="flex align-items-start justify-content-start gap-3">
+                  <ng-container *ngFor="let img of approvalSelected.attachmentImages; let i=index">
+                    <a [href]="img.url" target="_blank"
+                       class="flex align-items-center justify-content-start gap-2 no-underline bg-transparent border-round">
+                      <img [src]="img.url" class="h-4rem w-4rem object-fill">
+                    </a>
+                  </ng-container>
+                </div>
+              </div>
+            </div>
+          </div>
+        </mat-expansion-panel>
+        <mat-divider *ngIf="isShowContent[1].show" class="w-full"></mat-divider>
+        <mat-expansion-panel *ngIf="isShowContent[1].show && approvalSelected?.versionWikiApproval" [expanded]=true
+                             class="unset-p">
+          <mat-expansion-panel-header [@.disabled]="true">
+            <mat-panel-title class="title-detail">Nội dung tài liệu</mat-panel-title>
+          </mat-expansion-panel-header>
+          <div>
+            <div class="flex justify-content-between py-3">
+              <div class="flex flex-row align-items-center justify-content-center">
+                <div class="flex flex-column gap-1">
+                  <span class="text-2xl font-medium ml-2">{{ approvalSelected?.versionWikiApproval?.name }}</span>
+                  <div class="flex flex-row align-items-center ml-2 gap-1">
+                    <span class="dot"></span>
+                    <span class="text-sm text-gray-500">{{ approvalSelected?.versionWikiApproval.code }}</span>
+                    <span class="dot ml-2"></span>
+                    <span
+                      class="text-sm text-gray-500">{{ approvalSelected?.versionWikiApproval?.categories[0]?.name }}</span>
+                    <span class="dot ml-2"></span>
+                    <span
+                      class="text-sm text-gray-500">{{ approvalSelected?.versionWikiApproval?.createdAt | date:'HH:mm dd/MM/yyyy' }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <mat-divider></mat-divider>
+            <div class="cover-photo mt-2"
+                 style="background-image: url({{approvalSelected?.versionWikiApproval.thumbnails[0].location}});">
+            </div>
+            <div [innerHTML]="approvalSelected?.versionWikiApproval?.content | safeHtml"></div>
+            <mat-divider *ngIf="approvalSelected?.versionWikiApproval?.attachments" class="mb-3"></mat-divider>
+            <label *ngIf="approvalSelected?.versionWikiApproval?.attachments" class="text-color font-semibold mb-2">
+              Tệp đính kèm
+            </label>
+            <!--            <app-attachment-inprogress [attachFiles]="approvalSelected?.versionWikiApproval?.attachments" [editable]="false"></app-attachment-inprogress>-->
+            <mat-divider *ngIf="approvalSelected?.versionWikiApproval?.tags" class="mb-3"></mat-divider>
+            <div *ngIf="approvalSelected?.versionWikiApproval?.tags"
+                 class="flex flex-wrap mb-3 gap-2 text-gray-500 cursor-pointer">
+              <span *ngFor="let tag of approvalSelected?.versionWikiApproval?.tags"
+                    class="bg-blue-50 border-round-2xl p-2">{{ tag.name }}</span>
+            </div>
+            <mat-divider class="mb-3"></mat-divider>
+            <!--            <app-editor-comment [comments]="approvalSelected?.versionWikiApproval?.comments" [versionWikiId]="approvalSelected?.versionWikiApproval?.id" (addComment)="onAddComment($event)"></app-editor-comment>-->
+          </div>
+        </mat-expansion-panel>
+        <mat-divider *ngIf="isShowContent[1].show && approvalSelected?.versionWikiApproval"
+                     class="w-full"></mat-divider>
+        <mat-expansion-panel *ngIf="isShowContent[3].show" [expanded]=true class="unset-p">
+          <mat-expansion-panel-header [@.disabled]="true" #panelH (click)="panelH._toggle()">
+            <mat-panel-title class="title-detail flex justify-content-between align-content-center w-full">
+              <span (click)="panelH._toggle()">Tiến trình</span>
+              <div
+                *ngIf="approvalSelected.yourAction === ApprovalActionEnum.Approve || approvalSelected.yourAction === ApprovalActionEnum.Consent"
+                class="flex flex-row align-items-center justify-content-center" (click)="openAddApproverDialog()">
+                <img src="assets/images/guest/ic_user_plus.svg" alt="">
+                <span class="text-primary">Cập nhật luồng phê duyệt</span>
+              </div>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <div class="flex flex-column align-items-stretch justify-content-start">
+            <div class="flex flex-column align-items-start relative">
+              <mat-divider vertical
+                           class="h-calc-3rem w-1px absolute top-1dot5rem left-1dot5rem"></mat-divider>
+              <ng-container *ngFor="let step of approvalSelected?.steps; let i=index">
+                <ng-container *ngFor="let user of step.users">
+                  <div class="w-full flex align-items-start justify-content-between py-4 z-5">
+                    <div class="flex-1 flex align-items-stretch gap-2">
+                      <div class="w-3rem h-3rem border-circle relative">
+                        <img class="w-full h-full border-circle object-fill"
+                             [src]="user.userAvatar">
+                        <img class="absolute bottom-3px right-0 object-fill" [src]="step?.icon">
+                      </div>
+                      <div
+                        class="flex-1 flex flex-column align-items-stretch justify-content-start gap-2">
+                        <div class="flex align-items-center justify-content-between">
+                          <span class="font-normal text-lg">{{ user.fullname }}</span>
+                          <span class="text-gray-500 pr-2 text-sm">
+                                                        {{ step.actionAt | date:'HH:mm dd/MM/yyyy' }}
+                                                    </span>
+                        </div>
+                        <span [class]="'text-sm ' + step?.textColor">
+                                                    {{ step.actionText }}
+                                                </span>
+                        <ng-container *ngIf="step.action == 'Pending'">
+                          <div *ngIf=" step.comment?.length"
+                               class="flex flex-column align-items-stretch justify-content-start gap-2 bg-gray-100 p-2">
+                                                        <span class="text-left pre-wrap-text">
+                                                            {{ step.comment }}
+                                                        </span>
+                          </div>
+                        </ng-container>
+                        <ng-container *ngIf="step?.action !='Pending'">
+                          <div *ngIf=" user.comments?.length > 0 && step.comment"
+                               class="flex flex-column align-items-stretch justify-content-start gap-2 bg-gray-100 p-2">
+                            <ng-container *ngFor="let cmt of user.comments">
+                                                            <span class="text-left pre-wrap-text">
+                                                                {{ cmt }}
+                                                            </span>
+                            </ng-container>
+                            <div *ngIf="user.attachmentUrls?.length"
+                                 class="bg-white border-round p-3 flex flex-column align-items-stretch gap-3">
+                              <span class="font-normal text-lg">Tệp đính kèm</span>
+                              <ng-container
+                                *ngFor="let file of user.attachmentUrls; let i=index">
+                                <a [href]="file.url" target="_blank"
+                                   class="border-round-lg flex align-items-center justify-content-start gap-3 no-underline text-blue-300 font-medium bg-gray-50 p-3">
+                                  <i class="fa fa-file-pdf-o text-red-500"
+                                     aria-hidden="true"></i>
+                                  <span>{{ file.name }}</span>
+                                </a>
+                              </ng-container>
+                            </div>
+                            <div *ngIf="user.imageUrls?.length && step.imageUrls"
+                                 class="bg-white border-round p-3 flex flex-column align-items-stretch gap-2">
+                              <span class="font-normal text-lg">Ảnh</span>
+                              <div
+                                class="flex align-items-start justify-content-start gap-3">
+                                <ng-container
+                                  *ngFor="let img of user.imageUrls; let i=index">
+                                  <a [href]="img.url" target="_blank"
+                                     class="flex align-items-center justify-content-start gap-2 no-underline bg-transparent border-round">
+                                    <img [src]="img.url"
+                                         class="h-4rem w-4rem object-fill">
+                                  </a>
+                                </ng-container>
+                              </div>
+                            </div>
+                          </div>
+                        </ng-container>
+                      </div>
+                    </div>
+                    <!--                                <span class="text-gray-500 pr-2">-->
+                    <!--                                    {{step.actionAt | date:'HH:mm dd/MM/yyyy'}}-->
+                    <!--                                </span>-->
+                  </div>
+                </ng-container>
+              </ng-container>
+            </div>
+          </div>
+        </mat-expansion-panel>
+        <mat-divider *ngIf="isShowContent[3].show" class="w-full"></mat-divider>
+        <mat-expansion-panel *ngIf="isShowContent[0].show || isShowContent[2].show" [expanded]=true class="unset-p">
+          <mat-expansion-panel-header [@.disabled]="true" #panelAction (click)="panelAction._toggle()">
+            <mat-panel-title class="title-detail flex justify-content-between align-content-center w-full">
+              <span (click)="panelAction._toggle()">Hoạt động</span>
+              <div (click)="addNote()" *ngIf="approvalSelected?.status != ApprovalStatus.Forward"
+                   class="flex flex-row align-items-center justify-content-center">
+                <img src="assets/images/guest/ic-message.svg" alt="">
+                <span class="text-primary">Thêm phản hồi</span>
+              </div>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <mat-tab-group class="mat-tab-has-color"
+                         *ngIf="(isShowContent[0].show && approvalSelected?.comments?.length > 0) || (approvalSelected?.history?.length > 0 && isShowContent[2].show)">
+            <mat-tab label="Phản hồi" *ngIf="isShowContent[0].show && approvalSelected?.comments?.length > 0">
+              <div *ngFor="let comment of approvalSelected?.comments" class="note mb-3">
+                <div class="row d-flex space-between align-items-baseline">
+                  <div>
+                    <div class="d-flex align-items-baseline">
+                      <p
+                        class="mr-2 text-white uppercase m-0 w-24px h-24px flex align-items-center justify-content-center border-circle bg-green-300">
+                        {{ getShortName(comment?.creator?.fullname) }}
+                      </p>
+                      <p class="user-comment">{{ comment?.creator?.fullname }}</p>
+                    </div>
+                  </div>
+                  <p class="text-gray-500 text-sm">{{ comment.createdAt |date:'HH:mm dd/MM/yyyy' }}</p>
+                </div>
+                <div>
+                  <span class="pre-wrap-text">{{ comment.description }}</span>
+                  <div *ngIf="comment?.attachments?.length"
+                       class="bg-white border-round p-3 flex flex-column align-items-stretch gap-3">
+                    <span class="font-normal text-lg">Tệp đính kèm</span>
+                    <ng-container *ngFor="let file of comment?.attachments let i=index">
+                      <a [href]="file.location" target="_blank"
+                         class="border-round-lg flex align-items-center justify-content-start gap-3 no-underline text-blue-300 font-medium bg-gray-50 p-3">
+                        <i class="fa fa-file-pdf-o text-red-500" aria-hidden="true"></i>
+                        <span>{{ file.name }}</span>
+                      </a>
+                    </ng-container>
+                  </div>
+
+
+                  <div *ngIf="comment.images?.length"
+                       class="bg-white border-round p-3 flex flex-column align-items-stretch gap-2">
+                    <span class="font-normal text-lg">Ảnh</span>
+                    <div class="flex align-items-start justify-content-start gap-3">
+                      <ng-container *ngFor="let img of comment.images; let i=index">
+                        <a [href]="img.location" target="_blank"
+                           class="flex align-items-center justify-content-start gap-2 no-underline bg-transparent border-round">
+                          <img [src]="img.location" class="h-4rem w-4rem object-fill">
+                        </a>
+                      </ng-container>
+                    </div>
+                  </div>
+                </div>
+                <mat-divider class="w-full my-2"></mat-divider>
+              </div>
+            </mat-tab>
+            <mat-tab label="Lịch sử" *ngIf="approvalSelected?.history?.length > 0 && isShowContent[2].show">
+              <div class="container mt-3">
+                <div>
+                  <div class="d-flex align-items-baseline">
+                    <p
+                      class="mr-2 text-white uppercase m-0 w-24px h-24px flex align-items-center justify-content-center border-circle"
+                      [style.background-color]="getColorForChar(approvalSelected.steps[0]?.actionUser?.fullname)">
+                      {{ getShortName(approvalSelected.steps[0]?.actionUser?.fullname) }}
+                    </p>
+                    <p class="name-history">{{ approvalSelected.steps[0]?.actionUser?.fullname }}</p> &nbsp;
+                    <span class="font-italic text-gray-500">tạo phê duyệt - </span>&nbsp;
+                    <p class="text-second">{{ approvalSelected?.createdAt|date:'HH:mm dd/MM/yyyy' }}</p>
+                  </div>
+                </div>
+                <table class="table table--shaded">
+                  <thead class="table__head">
+                  <tr class="table__row">
+                    <td class="col-4">Trường</td>
+                    <td class="col-4">Giá trị ban đầu</td>
+                    <td class="col-4">Giá trị mới</td>
+                  </tr>
+                  </thead>
+                  <tbody class="table__body">
+                  <ng-container *ngFor="let history of approvalSelected.history">
+                    <tr class="table__row">
+                      <td colspan="3">
+                        <div class="flex flex-wrap align-items-center">
+                                                        <span
+                                                          class="mr-2 text-white uppercase m-0 w-24px h-24px flex align-items-center justify-content-center border-circle"
+                                                          [style.background-color]="getColorForChar(history.creator?.fullname[0])">
+                                                            {{ getShortName(history.creator?.fullname) }}
+                                                        </span>
+                          <span class="name-history mr-2">{{ history.creator?.fullname }}</span>
+                          <span class="font-italic text-gray-500">đã thực thiện thay đổi - </span>
+                          <span class="text-second ml-2">{{ history.createdAt |date:'HH:mm dd/MM/yyyy' }}</span>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr class="table__row">
+                      <td class="col-4">
+                        <div *ngFor="let log of history.logs">
+                          <p class="font-bold">{{ getLogFieldName(log?.field) }}</p>
+                        </div>
+                      </td>
+                      <td class="col-4">
+                        <div *ngFor="let log of history.logs">
+                          <ng-container [ngSwitch]="log.field">
+                            <ng-container *ngSwitchCase="'pipe_approve'">
+                              <ul class="mu">
+                                <li *ngFor="let val of log.oldValue; let i=index">
+                                  <ng-container *ngIf="val.action">
+                                    <span>{{ i + 1 + '. ' + val.actionByUser?.fullname }}</span>
+                                  </ng-container>
+                                  <ng-container *ngIf="!val.action">
+                                    <span
+                                      *ngIf="val.approveByUsers?.length > 0">
+                                        {{ i + 1 + '. ' + val.approveByUsers[0]?.fullname }}
+                                    </span>
+                                    <span *ngIf="val.consentByUser?.length > 0">
+                                        {{ i + 1 + '. ' + val.consentByUser[0]?.fullname }}
+                                    </span>
+                                  </ng-container>
+                                </li>
+                              </ul>
+                            </ng-container>
+                          </ng-container>
+
+                        </div>
+                      </td>
+                      <td class="col-4">
+                        <div *ngFor="let log of history.logs">
+                          <ng-container [ngSwitch]="log.field">
+                            <ng-container *ngSwitchCase="'pipe_approve'">
+                              <ul class="mu">
+                                <li *ngFor="let val of log.newValue; let i=index">
+                                  <ng-container *ngIf="val.action">
+                                    <span>{{ i + 1 + '. ' + val.actionByUser?.fullname }}</span>
+                                  </ng-container>
+                                  <ng-container *ngIf="!val.action">
+                                    <span
+                                      *ngIf="val.approveByUsers?.length > 0">
+                                        {{ i + 1 + '. ' + val.approveByUsers[0]?.fullname }}
+                                    </span>
+                                    <span *ngIf="val.consentByUser?.length > 0">
+                                        {{ i + 1 + '. ' + val.consentByUser[0]?.fullname }}
+                                    </span>
+                                  </ng-container>
+                                </li>
+                                <li *ngIf="log?.note">Ghi chú: {{ log?.note }}</li>
+                              </ul>
+                            </ng-container>
+                          </ng-container>
+                        </div>
+                      </td>
+                    </tr>
+                  </ng-container>
+                  </tbody>
+                </table>
+              </div>
+            </mat-tab>
+          </mat-tab-group>
+        </mat-expansion-panel>
+      </mat-accordion>
+    </div>
+    <div
+      *ngIf="approvalSelected?.yourAction || (approvalSelected?.requester?.id === userLogin.id && approvalSelected?.status === ApprovalStatus.UnderReview)"
+      class="flex flex-column md:flex-row align-items-end md:align-content-center justify-content-center py-2 gap-3 no-print border-top-1 border-gray-400 ml-action-group shadow-2">
+      <!-- <button class="mt-3 w-12rem pl-1 bg-transparent border-blue-300 border-round text-blue-300 flex gap-2"
+          (click)="addNote()">
+          <img src="/assets/images/guest/ic-message.svg" class="cursor-pointer">
+          <span class="font-bold" style="white-space: normal">Thêm phản hồi</span>
+      </button> -->
+      <ng-container *ngIf="approvalSelected?.yourAction">
+        <button *ngIf="approvalSelected?.yourAction === ApprovalActionEnum.Approve"
+                class="w-full md:w-9rem bg-transparent btn_uq border-round flex gap-2" (click)="onAuthorize()">
+          <img src="/assets/images/guest/ic_uq.svg">
+          <span class="font-bold">Ủy quyền</span>
+        </button>
+        <button class="w-full md:w-9rem bg-transparent btn_pd border-round flex gap-2"
+                (click)="onConfirmApproval(ApprovalProcessActionEnum.Approve, approvalSelected)">
+          <img *ngIf="approvalSelected?.yourAction === ApprovalActionEnum.Approve"
+               src="/assets/images/guest/ic_pd.svg">
+          <i *ngIf="approvalSelected?.yourAction === ApprovalActionEnum.Consent"
+             class="fa fa-commenting-o"></i>
+          <span
+            class="font-bold">{{ approvalSelected?.yourAction === ApprovalActionEnum.Approve ? 'Phê duyệt' : 'Thẩm định' }}</span>
+        </button>
+        <button *ngIf="approvalSelected?.yourAction === ApprovalActionEnum.Approve"
+                class="w-full md:w-9rem bg-transparent btn_cd border-round flex gap-2"
+                (click)="onConfirmApproval(ApprovalStatus.Pending, approvalSelected)">
+          <img src="/assets/images/guest/ic_cd.svg">
+          <span class="font-bold">Chưa đạt</span>
+        </button>
+        <button *ngIf="approvalSelected?.yourAction === ApprovalActionEnum.Approve"
+                class="w-full md:w-9rem bg-transparent btn_tc border-round flex gap-2"
+                (click)="onConfirmApproval(ApprovalProcessActionEnum.Reject, approvalSelected)">
+          <img src="/assets/images/guest/ic_tc.svg">
+          <span class="font-bold">Từ chối</span>
+        </button>
+      </ng-container>
+      <ng-container
+        *ngIf="approvalSelected?.requester?.id === userLogin.id && approvalSelected?.status === ApprovalStatus.UnderReview">
+        <button class="w-full md:w-10rem bg-transparent border-red-500 border-round text-red-500 flex gap-2"
+                (click)="onConfirmApproval(ApprovalProcessActionEnum.Cancel, approvalSelected)">
+          <i class="fa fa-times" aria-hidden="true"></i>
+          <span>Hủy yêu cầu</span>
+        </button>
+      </ng-container>
+    </div>
+  </ng-template>
+
+  <!-- Button add new Mobile -->
+  <a [routerLink]="['/home/guest/approval/approval-created']"
+     class="h-3rem w-3rem flex md:hidden align-items-center justify-content-center bg-blue-300 border-none border-circle text-white absolute z-5 bottom-20px right-14px outline-none no-underline">
+    <i class="fa fa-plus" aria-hidden="true"></i>
+  </a>
+</div>

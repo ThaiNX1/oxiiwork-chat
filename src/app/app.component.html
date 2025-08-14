@@ -1,0 +1,17 @@
+@if (isLoading()) {
+  <div
+    class="w-full h-full fixed top-0 left-0 bg-gray-500 flex align-items-center justify-content-center opacity-60"
+    [style.z-index]="1001"></div>
+  <div class="w-full h-full fixed top-0 left-0 bg-transparent flex align-items-center justify-content-center"
+       [style.z-index]="1002">
+    <mat-spinner [strokeWidth]="6" class="w-4rem"></mat-spinner>
+  </div>
+}
+<router-outlet></router-outlet>
+
+<!-- Global error dialog -->
+<app-dialog-confirm-action [isShowConfirm]="isShowGlobalError"
+                           [setting]="confirmSetting"
+                           (closeConfirm)="isShowGlobalError = false">
+</app-dialog-confirm-action>
+

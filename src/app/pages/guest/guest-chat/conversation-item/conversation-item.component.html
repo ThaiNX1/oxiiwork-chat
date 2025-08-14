@@ -1,0 +1,58 @@
+<div class="flex align-items-center justify-content-start gap-2 p-2 border-round cursor-pointer overflow-auto"
+    [class.bg-gray-02]="conversationSelected?.id === _item?.id"
+    [class.hover:bg-gray-300]="conversationSelected?.id !== _item?.id" (click)="onSelectConversation.emit(_item)">
+    @switch (_item?.type) {
+        @case (ChatConversationType.Direct) {
+        <div class="w-3rem h-3rem border-circle flex align-items-center justify-content-center"
+            [ngClass]="_item?.imgUrl?.length ?  '' : 'bg-info-chat'">
+            @if (_item?.imgUrl?.length) {
+                <img class="w-full h-full object-cover border-circle" [src]="_item?.imgUrl">
+            } @else {
+                <p class="text-white font-semibold">{{ _item?.name | shortName }}</p>
+            }
+        </div>
+        }
+        @case (ChatConversationType.Group) {
+        <div class="w-3rem h-3rem border-circle flex align-items-center justify-content-center"
+            [ngClass]="_item?.imgUrl?.length ?  '' : 'bg-info-chat'">
+            @if (_item?.imgUrl?.length) {
+                <img class="w-full h-full object-cover border-circle bg-transparent" [src]="_item?.imgUrl">
+            } @else {
+                <p class="text-white font-semibold">{{ _item?.name | shortName }}</p>
+            }
+        </div>
+        }
+    }
+    <div class="flex-1 flex flex-column align-items-stretch justify-content-center gap-1 overflow-auto">
+        <p class="text-color font-semibold">{{ _item?.name }}</p>
+        @switch (_item?.lastMessage?.type) {
+        @case (ChatMessageType.DOC) {
+        <div
+            class="text-gray-500 max-h-2rem flex flex-column align-items-start justify-content-start break-word overflow-hidden">
+            <p class="m-0 break-all max-h-2rem overflow-hidden text-xs">{{ _item?.lastMessage?.message }}</p>
+        </div>
+        }
+        @default {
+        <div class="text-gray-500 max-h-2rem flex flex-column align-items-stretch justify-content-start overflow-hidden text-xs"
+            [innerHTML]="sanitizer.bypassSecurityTrustHtml(_item?.lastMessage?.message || '')">
+        </div>
+        }
+        }
+    </div>
+    <div class="flex flex-column align-items-end justify-content-center gap-1">
+        <p class="txt-04-color text-xs">
+            @if (_item?.isToday) {
+                Hôm nay
+            } @else {
+                {{ _item?.lastMessageAt | date:'dd/MM/yyyy' }}
+            }
+        </p>
+        <p class="txt-04-color text-xs">{{ _item?.lastMessageAt | date:'h:mm a' }}</p>
+        @if (_item?.unreadCount()) {
+            <p
+                class="text-white w-20px h-20px text-center bg-red-500 border-circle text-xs flex align-items-center justify-content-center">
+                {{ _item?.unreadCount() < 6 ? (_item?.unreadCount() | number) : '5+' }} 
+            </p>
+        }
+    </div>
+</div>

@@ -1,0 +1,18 @@
+@if (previewData?.images?.length || previewData?.siteName?.length || previewData?.title?.length) {
+  <div class="flex align-items-center justify-content-start">
+    <div class="flex-1 flex align-items-center justify-content-start gap-1 p-3 shadow-2 bg-white border-round border-noround-top">
+      @if (previewData?.images?.length) {
+        <img 
+          class="w-8rem h-5rem h-auto object-contain" 
+          [src]="previewData.images[0]"
+          alt=""
+        >
+      }
+      <div class="flex-1 flex flex-column align-items-start justify-content-center gap-2">
+        <p class="m-0 font-medium">{{ previewData.siteName }}</p>
+        <p class="m-0 font-semibold break-all">{{ previewData.title }}</p>
+        <p class="m-0 break-all">{{ previewData.description || '' }}</p>
+      </div>
+    </div>
+  </div>
+}

@@ -1,0 +1,41 @@
+<div class="flex-1 flex flex-column align-items-stretch justify-content-start gap-3 overflow-auto">
+  <div class="flex align-items-center justify-content-center p-2">
+    <img [src]="menuOpened ? '/assets/images/new/logo_expanded.svg' : '/assets/images/new/logo_unExpanded.svg'">
+  </div>
+  <div class="flex-1 flex-column align-items-stretch justify-content-start overflow-auto">
+    @if (menuOpened) {
+      <mat-accordion>
+        <ng-container *ngFor="let item of menus">
+          <mat-expansion-panel class="m-0 border-noround shadow-none"
+                               [class.bg-gray-300]="router.isActive(item.isActiveRouterLink, false)"
+                               [hideToggle]="!item?.children?.length">
+            <mat-expansion-panel-header>
+              <div class="h-full flex align-items-center justify-content-start gap-3">
+                <img [src]="item?.icon" class="w-4rem">
+                <a *ngIf="!item?.children?.length"
+                   class="h-full no-underline" [routerLink]="['/']">
+                  {{ item.name }}
+                </a>
+                <span *ngIf="item?.children?.length">{{ item?.name }}</span>
+              </div>
+            </mat-expansion-panel-header>
+            <div class="flex flex-column align-items-stretch justify-content-start pl-4">
+              <ng-container *ngFor="let child of item?.children">
+                <a *ngIf="!child?.children?.length"
+                   class="h-full no-underline" [routerLink]="[child.routerLink]">
+                  {{ child.name }}
+                </a>
+              </ng-container>
+            </div>
+          </mat-expansion-panel>
+        </ng-container>
+      </mat-accordion>
+    } @else {
+        <div class="flex-1 flex flex-column align-items-stretch justify-content-start gap-3 p-3 overflow-auto">
+          @for ( item of menus; track item.id) {
+
+          }
+        </div>
+    }
+  </div>
+</div>

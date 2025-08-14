@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <base href="/">
+  <meta charset="utf-8">
+  <title>Oxii Chat</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Phần mềm doanh nghiệp">
+  <link id="favicon" rel="icon" href="favicon.png">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+    rel="stylesheet">
+</head>
+
+<body class="w-screen h-screen">
+  <script>
+    function onUrlClick(el) {
+      const url = el?.getAttribute('data-url');
+      window.flutter_inappwebview.callHandler('openExternalLink', url);
+    }
+  </script>
+  <app-root></app-root>
+  <!-- <div id="pre-loading"
+     class="w-screen h-screen fixed top-0 left-0 bg-white hidden md:flex align-items-center justify-content-center"
+     [style.z-index]="99999">
+  <p class="loading-text m-0">S-Office</p>
+</div> -->
+</body>
+
+</html>

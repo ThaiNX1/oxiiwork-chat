@@ -1,0 +1,716 @@
+<div id="message-content"
+    class="flex flex-column align-items-stretch justify-content-start relative bg-white py-3 border-r-lg-24 h-cal-dot120">
+    @if (conversationSelected()?.id) {
+    <div class="flex-1 flex flex-column align-items-stretch justify-content-start overflow-auto">
+        <div class="flex align-items-center justify-content-start px-3 gap-3">
+            <div class="w-3rem h-3rem border-circle bg-info-chat flex align-items-center justify-content-center">
+                @if (conversationSelected().imgUrl?.length) {
+                <img class="w-full h-full object-fill border-circle cursor-pointer" viewImage
+                    [type]="DialogImageViewerType.IMAGE" [urls]="[conversationSelected().imgUrl]"
+                    [src]="conversationSelected().imgUrl">
+                } @else {
+                <p class="text-white font-semibold">{{ conversationSelected().name | shortName }}</p>
+                }
+            </div>
+            <div class="flex-1 flex flex-column align-items-stretch justify-content-center gap-1">
+                <p class="text-color font-semibold"
+                    [class.cursor-pointer]="conversationSelected()?.type === ChatConversationType.Direct"
+                    (click)="onShowPartnerInfo()">
+                    {{ conversationSelected()?.name }}
+                </p>
+                @switch (conversationSelected()?.type) {
+                @case (ChatConversationType.Direct) {
+                <p class="text-gray-500">
+                    {{ conversationSelected()?.lastMessageAt | date:'dd/MM/yyyy HH:mm a' }}
+                </p>
+                }
+                @case (ChatConversationType.Group) {
+                <div class="flex align-items-center justify-content-start">
+                    <button class="bg-transparent border-none h-auto p-0 text-gray-500 cursor-pointer"
+                        (click)="onShowMemberGroup()">
+                        {{ conversationSelected()?.members?.length }} {{'CHAT_COMPONENT.MEMBER' | translate}}
+                    </button>
+                </div>
+                }
+                }
+            </div>
+            @if (conversationSelected()?.id && conversationSelected()?.id !== conversationSelected()?.tempId) {
+            <div class="flex align-items-center justify-content-end">
+                @if (conversationSelected()?.type === ChatConversationType.Group) {
+                <button class="bg-transparent border-none flex align-items-center justify-content-center"
+                    (click)="onEditConversation(ChatConversationType.Group)">
+                    <img src="assets/images/guest/ic_user_add.svg">
+                </button>
+                }
+                <button class="bg-transparent border-none flex align-items-center justify-content-center"
+                    (click)="onSearchInConversation()">
+                    <img src="assets/images/guest/ic_search.svg">
+                </button>
+                <!--                    <button class="bg-transparent border-none flex align-items-center justify-content-center"-->
+                <!--                            [matMenuTriggerFor]="extraActionConversation">-->
+                <!--                      <mat-icon class="text-2xl">more_vert</mat-icon>-->
+                <!--                    </button>-->
+                <!--                <button class="bg-transparent border-none flex align-items-center justify-content-center">-->
+                <!--                  <img src="assets/images/guest/ic_table_layout.svg">-->
+                <!--                </button>-->
+            </div>
+            }
+        </div>
+        <mat-divider class="w-full mt-3"></mat-divider>
+        <div class="flex-1 flex flex-column align-items-stretch p-2 justify-content-start overflow-auto relative">
+            @if (scrollToEnd() && conversationSelected()?.id) {
+            <button
+                class="absolute bottom-8rem right-2rem w-3rem h-3rem border-circle bg-white shadow-1 flex align-items-center justify-content-center z-5"
+                (click)="onScrollToEndMessage($event)">
+                <img src="assets/images/arrow-sm-down.svg" alt="arrow-down">
+                <!-- <mat-icon class="text-3xl">keyboard_double_arrow_down</mat-icon> -->
+            </button>
+            }
+            <div id="messageDiv" infinite-scroll
+                class="flex-1 overflow-auto flex flex-column align-items-stretch p-2 justify-content-start gray-500-scroll"
+                [infiniteScrollUpDistance]="2" [infiniteScrollThrottle]="10" [scrollWindow]="false"
+                (scrolledUp)="onLoadMoreMessage.emit($event)" (scroll)="onScrollMessage($event)">
+                @for (item of conversationSelected()?.messages; track item.id) {
+                <div [id]="'parent_' + item.id" [attr.data-id]="item.id" (mouseenter)="onShowMessageAction(item)"
+                    [class.mt-4]="item.firstMessage && item.type !== MessageViewType.DATE_GROUP && item.type !== MessageViewType.LOG"
+                    class="w-full flex flex-column align-items-stretch justify-content-start">
+                    @switch (item.type) {
+                    @case (MessageViewType.DATE_GROUP) {
+                    <div class="flex align-items-center justify-content-center gap-3 py-3">
+                        <!-- <mat-divider class="flex-1"></mat-divider> -->
+                        <p class="txt-04-color">{{ item.message }}</p>
+                        <!-- <mat-divider class="flex-1"></mat-divider> -->
+                    </div>
+                    }
+                    @case (MessageViewType.LOG) {
+                    <div class="flex align-items-center justify-content-center gap-3 py-1">
+                        <!-- <mat-divider class="flex-1"></mat-divider> -->
+                        <p class="txt-04-color font-italic text-xs text-center">{{ generateActionText(item) }}</p>
+                        <!-- <mat-divider class="flex-1"></mat-divider> -->
+                    </div>
+                    }
+                    @default {
+                    <div [id]="'child_' + item.id" [attr.data-id]="item.id"
+                        class="flex align-items-start justify-content-start gap-1 pr-1 pb-1">
+                        <div class="w-3rem h-3rem border-circle flex align-items-center"
+                            [ngClass]="item.firstMessage && item.role === MessageRole.MEMBER ? 'border-white border-1' : ''">
+                            @if (item.firstMessage && item.role === MessageRole.MEMBER) {
+                            @if (item?.sender?.imageUrls?.length) {
+                            <img class="w-full h-full border-circle object-fill" [attr.data-id]="item.id"
+                                [src]="item?.sender?.imageUrls[0]">
+                            } @else {
+                            <div [attr.data-id]="item.id"
+                                class="w-full h-full border-circle flex align-items-center justify-content-center bg-info-chat">
+                                <p [attr.data-id]="item.id" class="text-white font-semibold">{{ item?.sender?.fullname |
+                                    shortName }}</p>
+                            </div>
+                            }
+                            } @else if (!item.firstMessage && item.role === MessageRole.MEMBER &&
+                            this.messageHover()?.id
+                            === item.id) {
+                            <span class="text-gray-500 break-word">{{ item.createdAt | date: 'HH:mm' }}</span>
+                            }
+                        </div>
+                        <div class="flex-1 flex flex-column align-items-stretch">
+                            <div class="flex align-items-center"
+                                [ngClass]="item.role === MessageRole.MEMBER ? 'justify-content-start' : 'justify-content-end'">
+                                @if (item.firstMessage && conversationSelected()?.type === ChatConversationType.Group) {
+                                <p class="font-medium text-gray-500 py-2">
+                                    @if (item.role === MessageRole.MEMBER) {
+                                    <span class="text-gray-500">{{ item.sender?.fullname }}</span>
+                                    }
+                                    <span class="px-3 text-gray-500">{{ item.createdAt | date: 'HH:mm' }}</span>
+                                    @if (item.role === MessageRole.OWNER) {
+                                    <span class="text-gray-500">{{ item.sender?.fullname }}</span>
+                                    }
+                                </p>
+                                } @else if (item.firstMessage) {
+                                <p class="font-medium text-gray-400 py-2"
+                                    [ngClass]="item.role === MessageRole.MEMBER ? 'text-left' : 'text-right'">
+                                    <span class="text-gray-500">{{ item.createdAt | date: 'HH:mm' }}</span>
+                                </p>
+                                }
+                            </div>
+                            <div class="flex-1 flex align-items-start relative" [attr.data-id]="item.id"
+                                [ngClass]="item.role === MessageRole.MEMBER ? 'justify-content-start' : 'justify-content-end'">
+                                <div class="flex flex-column align-items-stretch justify-content-start border-round mw-70percent relative"
+                                    [class.w-fit]="!item?.isEdit" [class.w-full]="item?.isEdit" [attr.data-id]="item.id"
+                                    [class.m-bottom-15px]="item.reactions?.length"
+                                    [class.border-round-first-message]="item.firstMessage && item.role === MessageRole.MEMBER"
+                                    [class.border-round-first-message-owner]="item.firstMessage && item.role === MessageRole.OWNER"
+                                    [ngClass]="item.role === MessageRole.MEMBER ? 'bg-left-item-chat' : 'bg-info-chat'">
+                                    @if (item.replyMessage) {
+                                    <div [class.border-round-first-message]="item.firstMessage && item.role === MessageRole.MEMBER"
+                                        [class.border-round-first-message-owner]="item.firstMessage && item.role === MessageRole.OWNER"
+                                        class="flex align-items-center p-3 pb-0">
+                                        <div class="flex-1 flex flex-column align-items-stretch justify-content-start border-left-2 border-blue-300 p-2 bg-white gap-1"
+                                            (click)="onViewMessageSearch.emit({message: item.replyMessage, isReply: true})">
+                                            <p class="font-semibold font-italic">
+                                                {{ item.replyMessage.sender?.fullname }}
+                                            </p>
+                                            @switch (item.replyMessage.type) {
+                                            @case (ChatMessageType.IMAGE) {
+                                            <img class="max-w-5rem object-fill" [src]="item.replyMessage.urls[0]">
+                                            }
+                                            @case (ChatMessageType.VIDEO) {
+                                            <div
+                                                class="max-w-5rem flex align-items-center justify-content-center bg-gray-400 border-round border-gray-500">
+                                                <mat-icon class="text-3xl">play_arrow</mat-icon>
+                                            </div>
+                                            }
+                                            @case (ChatMessageType.DOC) {
+                                            <p class="text-gray-500 text-left break-word max-h-2rem overflow-hidden">
+                                                [File] {{ item.replyMessage?.fileName || '' }}
+                                            </p>
+                                            }
+                                            @default {
+                                            <div class="text-gray-500 text-left break-word max-h-2rem overflow-hidden"
+                                                [innerHTML]="sendMessageForm.value['replyMessage']?.innerHTML || sendMessageForm.value['replyMessage']?.message || item.replyMessage.message">
+                                            </div>
+                                            }
+                                            }
+                                        </div>
+                                    </div>
+                                    }
+                                    <div [id]="item.type + '_' + item.id" [attr.data-id]="item.id"
+                                        class="flex-1 flex align-items-start"
+                                        [class.justify-content-start]="item.role === MessageRole.MEMBER"
+                                        [class.justify-content-end]="item.role === MessageRole.OWNER"
+                                        [class.border-round-first-message]="item.firstMessage && item.role === MessageRole.MEMBER"
+                                        [class.border-round-first-message-owner]="item.firstMessage && item.role === MessageRole.OWNER"
+                                        [class.border-round]="!item.firstMessage">
+                                        <ng-template #textMessage let-item="item">
+                                            @if (item.isEdit) {
+                                            <div class="w-full flex flex-column align-items-stretch justify-content-start border-1 border-round border-gray-400 p-3 gap-3"
+                                                matAutocompleteOrigin
+                                                #mentionEditMessageAutocompleteOrigin="matAutocompleteOrigin">
+                                                <textarea [(ngModel)]="item.messageEdited" rows="3" class="border-none"
+                                                    (keydown)="onKeydownEditMessage($event, item)">
+                                                </textarea>
+                                                <input hidden [matAutocomplete]="editMessageMention"
+                                                    [matAutocompleteConnectedTo]="mentionEditMessageAutocompleteOrigin"
+                                                    #autocompleteEditMessageTrigger="matAutocompleteTrigger" />
+                                                <div class="flex align-items-center justify-content-end gap-3">
+                                                    @if (!isUpdateEditMessageSelected()) {
+                                                    <button
+                                                        class="w-3rem h-2rem bg-gray-100 flex align-items-center justify-content-center border-gray-400 text-color"
+                                                        (click)="onSubmitMessageEdit(item)">
+                                                        Hủy
+                                                    </button>
+                                                    }
+                                                    <button
+                                                        class="w-3rem h-2rem flex align-items-center justify-content-center border-blue-300 text-white"
+                                                        [ngClass]="!isUpdateEditMessageSelected() ? 'bg-blue-300' : 'bg-gray-400'"
+                                                        [disabled]="isUpdateEditMessageSelected()"
+                                                        (click)="onSubmitMessageEdit(item, true)">
+                                                        @if (!isUpdateEditMessageSelected()) {
+                                                        Lưu
+                                                        } @else {
+                                                        <mat-icon
+                                                            class="edit-message text-gray-500 text-2xl font-semibold">
+                                                            autorenew
+                                                        </mat-icon>
+                                                        }
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            } @else {
+                                            <div class="flex flex-column align-items-stretch justify-content-start"
+                                                [attr.data-id]="item.id"
+                                                [ngClass]="item.id === messageSearchSelected()?.id
+                                                      ? 'bg-orange-500'
+                                                      : item.role === MessageRole.MEMBER ? 'bg-left-item-chat' : 'bg-info-chat'"
+                                                [class.border-round-first-message]="item.firstMessage && item.role === MessageRole.MEMBER"
+                                                [class.border-round-first-message-owner]="item.firstMessage && item.role === MessageRole.OWNER"
+                                                [class.border-round]="!item.firstMessage">
+                                                <p class="max-w-full w-fit p-message break-word"
+                                                    [attr.data-id]="item.id"
+                                                    [class.owner-message]="item.role === MessageRole.OWNER"
+                                                    [ngClass]="item.role === MessageRole.MEMBER ? '' : 'text-white'"
+                                                    [innerHTML]="(item?.hasMention || item?.hasLink) ? item.innerHTML : item.message">
+                                                </p>
+                                                @if (item.previewLink) {
+                                                <!-- <app-preview-link [link]="item.previewLink"></app-preview-link> -->
+                                                }
+                                            </div>
+                                            }
+                                        </ng-template>
+                                        @switch (item.type) {
+                                        @case (MessageViewType.TEXT) {
+                                        <ng-container
+                                            *ngTemplateOutlet="textMessage; context:{item:item}"></ng-container>
+                                        }
+                                        @case (MessageViewType.LOCATION) {
+                                        <ng-container
+                                            *ngTemplateOutlet="textMessage; context:{item:item}"></ng-container>
+                                        }
+                                        @case (ChatMessageType.DOC) {
+                                        <div class="flex flex-column align-items-stretch justify-content-start border-round p-message gap-3"
+                                            [attr.data-id]="item.id"
+                                            [ngClass]="item.id === messageSearchSelected()?.id
+                                                      ? 'bg-orange-500'
+                                                      : item.role === MessageRole.MEMBER ? 'bg-left-item-chat' : 'bg-info-chat'">
+                                            <div class="flex align-items-center justify-content-start gap-3">
+                                                <mat-icon class="text-xl text-blue-300">file_present</mat-icon>
+                                                <p [attr.data-id]="item.id" class="flex-1 break-word"
+                                                    [class.text-white]="item.role === MessageRole.OWNER">
+                                                    {{ item.fileName }}
+                                                </p>
+                                                @if (item.urls?.length) {
+                                                <a [href]="item.urls[0]" target="_blank"
+                                                    class="bg-transparent owner-color min-w-0 h-auto border-none flex align-items-center justify-content-center">
+                                                    <mat-icon class="text-xl">download</mat-icon>
+                                                </a>
+                                                }
+                                            </div>
+                                            @if (item.sending) {
+                                            <mat-progress-bar mode="indeterminate" [color]="'#0dace3'">
+                                            </mat-progress-bar>
+                                            }
+                                        </div>
+                                        }
+                                        @case (MessageViewType.AUDIO) {
+                                        @if (item.urls?.length) {
+                                        <audio [src]="item.urls[0]" controls [attr.data-id]="item.id"></audio>
+                                        }
+                                        }
+                                        @case (MessageViewType.VIDEO) {
+                                        @if (item.urls?.length) {
+                                        <div class="flex flex-column align-items-center justify-content-start relative">
+                                            <video #video [src]="item.urls[0]" [attr.data-id]="item.id"
+                                                class="max-w-20rem border-round cursor-pointer flex align-items-center justify-content-center"
+                                                [style.border-top-left-radius]="item.firstMessage && item.role === MessageRole.MEMBER ? '0 !important' : 'unset'"
+                                                [style.border-top-right-radius]="item.firstMessage && item.role === MessageRole.OWNER ? '0!important' : 'unset'"
+                                                viewImage [type]="DialogImageViewerType.VIDEO"
+                                                [urls]="item.urls"></video>
+                                            <button class="absolute top-35 left-40 z-5 bg-transparent border-none"
+                                                (click)="video.click()">
+                                                <mat-icon class="text-7xl">play_circle</mat-icon>
+                                            </button>
+                                        </div>
+                                        }
+                                        }
+                                        @case (MessageViewType.IMAGE) {
+                                        <div class="flex flex-column align-items-stretch justify-content-start gap-2">
+                                            <div class="flex align-items-start justify-content-start flex-wrap gap-2"
+                                                [attr.data-id]="item.id">
+                                                @for (imgSrc of item.urls; track imgSrc) {
+                                                <img class="max-w-20rem border-round object-contain cursor-pointer shadow-1"
+                                                    [style.border-top-left-radius]="item.firstMessage && item.role === MessageRole.MEMBER ? '0 !important' : 'unset'"
+                                                    [style.border-top-right-radius]="item.firstMessage && item.role === MessageRole.OWNER ? '0!important' : 'unset'"
+                                                    [src]="imgSrc" viewImage [type]="DialogImageViewerType.IMAGE"
+                                                    [urls]="item.urls">
+                                                }
+                                            </div>
+                                            @if (item.message?.length) {
+                                            <p class="max-w-full w-fit p-message break-word" [attr.data-id]="item.id"
+                                                [class.owner-message]="item.role === MessageRole.OWNER"
+                                                [ngClass]="item.role === MessageRole.MEMBER ? '' : 'text-white'"
+                                                [innerHTML]="(item?.hasMention || item?.hasLink) ? item.innerHTML : item.message">
+                                            </p>
+                                            }
+                                        </div>
+                                        }
+                                        }
+                                    </div>
+                                    @if (item.reactions?.length) {
+                                    <div cdkOverlayOrigin #showReactionsTooltip="cdkOverlayOrigin"
+                                        (click)="onShowReactionDetails(item)"
+                                        (mouseenter)="item['showReactionsTooltip'] = !item['showReactionsTooltip']"
+                                        (mouseleave)="item['showReactionsTooltip'] = false"
+                                        class="absolute bottom-15-negative border-round bg-white shadow-1 p-1 cursor-pointer"
+                                        [ngClass]="item.role === MessageRole.OWNER ? 'left-0' : 'right-0'"
+                                        [class.min-w-60px]="item.reactions?.length == 2"
+                                        [class.min-w-80px]="item.reactions?.length >= 3">
+                                        @for (reaction of item.reactions.slice(0, 3); track reaction) {
+                                        <span>{{ reaction.code }}</span>
+                                        <!-- <div>
+                                              @for (reactor of reaction.reactors; track reactor; let i = $index) {
+                                                <span
+                                                  class="text-color">{{ i > 0 ? ', ' : '' }}{{ reactor.fullname }}</span>
+                                              }
+                                            </div> -->
+                                        }
+                                        <span class="ml-1">{{ countReactions(item.reactions) }}</span>
+                                    </div>
+                                    <!-- Overlay tooltip -->
+                                    <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="showReactionsTooltip"
+                                        [cdkConnectedOverlayOpen]="item['showReactionsTooltip']">
+                                        <ul class="reactions-list">
+                                            @for (reactor of getUniqueReactors(item.reactions)?.unique; track reactor) {
+                                            <li class="text-left">{{ reactor }}</li>
+                                            }
+                                        </ul>
+                                    </ng-template>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        @if (item.sending && item.role === MessageRole.OWNER) {
+                        <div class="w-10px h-10px border-1 border-circle border-blue-300 bg-white"></div>
+                        }
+                        <div class="w-3rem h-3rem border-circle flex align-items-center"
+                            [ngClass]="item.firstMessage && item.role === MessageRole.OWNER ? 'border-white border-1' : ''">
+                            @if (item.firstMessage && item.role === MessageRole.OWNER) {
+                            @if (item?.sender?.imageUrls?.length) {
+                            <img class="w-full h-full border-circle object-fill" [src]="item?.sender?.imageUrls[0]">
+                            } @else {
+                            <div
+                                class="w-full h-full border-circle flex align-items-center justify-content-center bg-info-chat">
+                                <p class="text-white font-semibold">{{ item?.sender?.fullname | shortName }}</p>
+                            </div>
+                            }
+                            } @else if (!item.firstMessage && item.role === MessageRole.OWNER && this.messageHover()?.id
+                            ===
+                            item.id) {
+                            <span class="text-gray-500 break-word">{{ item.createdAt | date: 'HH:mm' }}</span>
+                            }
+                        </div>
+                    </div>
+                    }
+                    }
+                </div>
+                }
+                <!--                    &lt;!&ndash;                  </li-virtual-scroll>&ndash;&gt;-->
+            </div>
+            <!--                <mat-divider class="w-full pb-2"></mat-divider>-->
+        </div>
+        @if (senderTyping()?.isTyping && senderTyping()?.userId !== user?.id) {
+        <div class="flex align-items-end justify-content-start px-3 pt-2">
+            <p class="m-0 typing-text">{{ senderTyping()?.fullName }} {{'CHAT_COMPONENT.TYPING' | translate}}</p>
+        </div>
+        }
+        <div class="flex flex-column align-items-stretch justify-content-start px-3 pt-3">
+            @if (sendMessageForm.value['replyMessage']) {
+            <div class="flex align-items-center justify-content-start pb-2">
+                <div
+                    class="flex-1 flex flex-column align-items-stretch justify-content-start border-left-2 border-blue-300 pl-2 py-1 gap-1">
+                    <p class="font-semibold font-italic">
+                        {{ sendMessageForm.value['replyMessage'].sender?.fullname }}
+                    </p>
+                    @switch (sendMessageForm.value['replyMessage'].type) {
+                    @case (ChatMessageType.IMAGE) {
+                    <img class="w-3rem h-3rem object-fill" [src]="sendMessageForm.value['replyMessage'].urls[0]">
+                    }
+                    @case (ChatMessageType.VIDEO) {
+                    <div
+                        class="w-3rem h-3rem flex align-items-center justify-content-center bg-gray-400 border-round border-gray-500">
+                        <mat-icon class="text-3xl">play_arrow</mat-icon>
+                    </div>
+                    }
+                    @case (ChatMessageType.DOC) {
+                    <p class="text-gray-500 text-left break-word max-h-2rem overflow-hidden">
+                        [File] {{ sendMessageForm.value['replyMessage']?.fileName || '' }}
+                    </p>
+                    }
+                    @default {
+                    <div class="text-gray-500 text-left break-word max-h-2rem overflow-hidden"
+                        [innerHTML]="sendMessageForm.value['replyMessage']?.innerHTML || sendMessageForm.value['replyMessage']?.message">
+                    </div>
+                    <!--                            @if(sendMessageForm.value['replyMessage']){}-->
+                    <!--                            <p-->
+                    <!--                              class="text-gray-500 text-left break-word max-h-2rem overflow-hidden">-->
+                    <!--                              {{ sendMessageForm.value['replyMessage'].message }}-->
+                    <!--                            </p>-->
+                    }
+                    }
+                </div>
+                <button type="button"
+                    class="min-w-0 border-none bg-transparent flex align-items-center justify-content-center"
+                    (click)="onClearReplyMessage()">
+                    <mat-icon class="font-semibold">clear</mat-icon>
+                </button>
+            </div>
+            <mat-divider class="w-full mb-2"></mat-divider>
+            }
+            <form [formGroup]="sendMessageForm" id="form-input-text-message">
+                <div id="parent-input-text-message"
+                    class="flex align-items-stretch justify-content-end bg-gray-02 border-round-3xl px-3"
+                    [style.flex-direction]="(conversationSelected()?.multipleLineTextbox || messageFiles?.length) ? 'column' : 'row'"
+                    matAutocompleteOrigin #mentionAutocompleteOrigin="matAutocompleteOrigin">
+                    @if (messageFiles?.length) {
+                    <div class="flex align-items-center justify-content-start gap-2 max-h-5rem flex-wrap overflow-auto">
+                        @for (item of messageFiles; track item; let i = $index) {
+                        @switch (item.type) {
+                        @case (ChatMessageType.IMAGE) {
+                        <div class="w-4rem h-4rem relative pt-2 border-round-lg">
+                            <img class="w-4rem h-4rem object-contain border-round-lg" [src]="item.url">
+                            <button class="min-w-0 h-auto p-0 absolute z-5 top-5px right-0 bg-transparent border-none"
+                                (click)="onRemoveFile(i)">
+                                <mat-icon class="text-gray-500">cancel</mat-icon>
+                            </button>
+                        </div>
+                        }
+                        @case (ChatMessageType.DOC) {
+                        <div class="flex align-items-center justify-content-start max-w-full">
+                            <p class="overflow-hidden white-space-nowrap text-overflow-ellipsis">{{ item.fileName }}</p>
+                            <button type="button"
+                                class="min-w-0 h-auto p-0 absolute z-5 top-16px right-14px bg-transparent border-none"
+                                (click)="onRemoveFile(i)">
+                                <mat-icon class="text-gray-500">highlight_off</mat-icon>
+                            </button>
+                        </div>
+                        }
+                        }
+                        }
+                    </div>
+                    }
+                    <div id="input-text-message" class="flex-1 flex align-items-center justify-content-start"
+                        [class.py-2]="conversationSelected()?.multipleLineTextbox"
+                        (keydown)="onSendMessage($event, ChatMessageType.TEXT)">
+                        <p id="contenteditable-input-text-message" contenteditable="true"
+                            class="input-text-chat outline-none flex-1 break-word">
+                        </p>
+                    </div>
+                    <div class="w-auto flex align-items-center justify-content-end gap-1">
+                        <!--                      <button class="bg-transparent border-none flex align-items-center justify-content-center">-->
+                        <!--                        <mat-icon class="text-2xl text-gray-500">image</mat-icon>-->
+                        <!--                      </button>-->
+                        <button type="button" tabindex="-1"
+                            class="bg-transparent border-none flex align-items-center justify-content-center"
+                            (click)="onShowEmoji()">
+                            <mat-icon class="text-2xl text-gray-500">emoji_emotions</mat-icon>
+                        </button>
+                        <!-- @if (geolocationCurrentPosition()) {
+                      
+                      } -->
+                        <button type="button" tabindex="-1"
+                            class="bg-transparent border-none flex align-items-center justify-content-center"
+                            (click)="onSendMessage($event, ChatMessageType.LOCATION, true)">
+                            <mat-icon class="text-2xl text-gray-500">place</mat-icon>
+                        </button>
+                        <button type="button" tabindex="-1"
+                            class="bg-transparent border-none flex align-items-center justify-content-center"
+                            (click)="messageFile.click()">
+                            <mat-icon class="text-2xl text-gray-500">attach_file</mat-icon>
+                        </button>
+                        <button type="button" tabindex="-1"
+                            class="bg-transparent border-none flex align-items-center justify-content-center"
+                            [disabled]="!sendMessageForm.value.text?.length && !messageFiles?.length"
+                            (click)="onSendMessage($event, ChatMessageType.TEXT, true)">
+                            <mat-icon class="text-2xl"
+                                [ngClass]="!sendMessageForm.value.text?.length && !messageFiles?.length ? 'text-gray-500' : 'text-blue-300'">
+                                send
+                            </mat-icon>
+                        </button>
+                    </div>
+                </div>
+                <input #messageFile type="file" formControlName="file" class="hidden"
+                    (change)="onSendMessage($event, ChatMessageType.DOC, true)">
+                <input hidden [matAutocomplete]="auto" [matAutocompleteConnectedTo]="mentionAutocompleteOrigin"
+                    #autocompleteTrigger="matAutocompleteTrigger" />
+            </form>
+        </div>
+    </div>
+    }
+</div>
+
+<app-dialog-action [setting]="addEditDialogSetting" [isShowDialog]="visibleAddEditDialog"
+  (close)="onCloseAddEditDialog($event)">
+</app-dialog-action>
+
+<!--Mention-->
+<mat-autocomplete #auto="matAutocomplete" class="border-round" (optionSelected)="onSelectMention($event)">
+    @for (member of mentionMembers(); track member.user.id; let i = $index) {
+    <mat-option class="flex-1" [value]="member.user.id">
+        <div class="flex align-items-center justify-content-start gap-2 p-2"
+            [class.bg-gray-400]="i === activeSuggestionIndex">
+            <div class="w-2rem h-2rem border-circle flex align-items-center justify-content-center bg-blue-300">
+                @if (member.user.imageUrls?.length) {
+                <img class="w-full h-full object-fill border-circle" [src]="member.user.imageUrls[0]">
+                } @else {
+                <p class="text-white font-semibold">{{ member.user?.fullname | shortName }}</p>
+                }
+            </div>
+            <p>{{ member.user?.fullname }}{{ member.user?.departmentName ? ' - ' + member.user?.departmentName : '' }}
+            </p>
+        </div>
+    </mat-option>
+    }
+</mat-autocomplete>
+
+<!--Edit message mention-->
+<mat-autocomplete #editMessageMention="matAutocomplete" class="border-round"
+    (optionSelected)="onEditMessageMentionSelected($event)">
+    @for (member of editMessageMentionMembers(); track member.user.id; let i = $index) {
+    <mat-option class="flex-1" [value]="member.user.id">
+        <div class="flex align-items-center justify-content-start gap-2 p-2">
+            <div class="w-2rem h-2rem border-circle flex align-items-center justify-content-center bg-blue-300">
+                @if (member.user.imageUrls?.length) {
+                <img class="w-full h-full object-fill border-circle" [src]="member.user.imageUrls[0]">
+                } @else {
+                <p class="text-white font-semibold">{{ member.user?.fullname | shortName }}</p>
+                }
+            </div>
+            <p>{{ member.user?.fullname }} - {{ member.user?.departmentName }}</p>
+        </div>
+    </mat-option>
+    }
+</mat-autocomplete>
+
+<!--Message action-->
+<ng-template #messageActionTemplate let-item="item">
+    <div class="flex align-items-center justify-content-center gap-1 p-2"
+        [class.bg-white]="commonService.smallScreen()">
+        <button class="h-auto min-w-0 flex align-items-center justify-content-center bg-transparent border-none"
+            (mouseenter)="onShowMessageReAction($event)" (mouseleave)="onLeaveReAction($event)"
+            (click)="onReactionMessage({key: '/-strong', value: '👍'})">
+            <mat-icon class="text-xl txt-04-color hover:text-blue-300">thumb_up_alt</mat-icon>
+        </button>
+        <button class="h-auto min-w-0 flex align-items-center justify-content-center bg-transparent border-none"
+            title="{{'COMMON.LABEL.REPLY' | translate}}" (click)="onReplyMessage()">
+            <mat-icon class="text-xl txt-04-color hover:text-blue-300">reply</mat-icon>
+        </button>
+        <button class="h-auto min-w-0 flex align-items-center justify-content-center bg-transparent border-none"
+            title="{{'COMMON.LABEL.FORWARD' | translate}}" (click)="onForwardMessage()">
+            <mat-icon class="text-xl txt-04-color hover:text-blue-300 scaleX--1">reply</mat-icon>
+        </button>
+        <button class="h-auto min-w-0 flex align-items-center justify-content-center bg-transparent border-none"
+            title="{{'COMMON.LABEL.ADD' | translate}}" [matMenuTriggerFor]="extraActionMenu"
+            [matMenuTriggerData]="{item:item}">
+            <mat-icon class="text-xl txt-04-color hover:text-blue-300">more_horiz</mat-icon>
+        </button>
+    </div>
+</ng-template>
+
+<!--Message action emoji-->
+<ng-template #messageReActionTemplate>
+    <div
+        class="w-screen md:w-30rem flex align-items-center justify-content-center p-3 bg-gray-50 border-gray-400 border-1 border-round-xl">
+        <div class="flex-1 flex align-items-start justify-content-start gap-2 flex-wrap">
+            @for (emoji of emojis(); track emoji.key; let i = $index) {
+            <button class="min-w-0 h-auto bg-transparent border-none message-icon-action"
+                (click)="onReactionMessage(emoji)">
+                <span>{{ emoji.value }}</span>
+            </button>
+            }
+        </div>
+    </div>
+</ng-template>
+
+<!--Message action delete/edit/copy-->
+<mat-menu #extraActionMenu="matMenu">
+    <ng-template matMenuContent let-item="item">
+        <button mat-menu-item class="flex align-items-center justify-content-start gap-2"
+            (click)="onEditMessage(item, ChatMessageAct.COPY)">
+            <mat-icon>content_copy</mat-icon>
+            <span>{{'COMMON.LABEL.COPY' | translate}}</span>
+        </button>
+        @if (item.role === MessageRole.OWNER) {
+        @if (item.type === MessageViewType.TEXT) {
+        <button mat-menu-item class="flex align-items-center justify-content-start gap-2"
+            (click)="onEditMessage(item, ChatMessageAct.EDIT)">
+            <mat-icon class="text-blue-300">edit_square</mat-icon>
+            <span class="text-blue-300">{{'CHAT_COMPONENT.EDIT_MESSAGE' | translate}}</span>
+        </button>
+        }
+        <button mat-menu-item class="flex align-items-center justify-content-start gap-2"
+            (click)="onEditMessage(item, ChatMessageAct.DEL)">
+            <mat-icon class="text-red-500">clear</mat-icon>
+            <span class="text-red-500">{{'CHAT_COMPONENT.RECALL' | translate}}</span>
+        </button>
+        }
+    </ng-template>
+</mat-menu>
+
+<!--Forward message-->
+<ng-template myTemplate tempCode="forwardMessage">
+    <form [formGroup]="forwardMessageForm">
+        <div
+            class="w-30rem h-auto max-h-30rem flex flex-column align-items-stretch justify-content-start gap-3 overflow-auto">
+            <mat-form-field floatLabel="auto" appearance="outline"
+                class="w-full bg-white flex flex-column align-items-stretch justify-content-start">
+                <div class="flex align-items-center justify-content-start flex-wrap gap-2">
+                    <!--          @if (forwardUsers()?.length) {-->
+                    <mat-chip-set>
+                        @for (user of forwardUsers(); track $index) {
+                        <mat-chip class="my-0">
+                            <div
+                                class="bg-gray-500 border-round-3xl p-1 flex-nowrap flex align-items-center justify-content-start gap-2">
+                                @if (user?.imageUrls?.length) {
+                                <img class="w-2rem h-2rem border-circle object-fill bg-blue-300"
+                                    [src]="user?.imageUrls[0]">
+                                } @else {
+                                <div
+                                    class="w-2rem h-2rem border-circle flex align-items-center justify-content-center bg-blue-300">
+                                    <p class="text-white font-semibold">{{ user.fullname | shortName }}</p>
+                                </div>
+                                }
+                                <span class="text-white font-semibold">{{ user.fullname }}</span>
+                                <button
+                                    class="bg-transparent border-none min-w-0 h-auto flex align-items-center justify-content-center"
+                                    (click)="onRemoveForwardUser($index)">
+                                    <mat-icon class="text-white font-bold">close</mat-icon>
+                                </button>
+                            </div>
+                        </mat-chip>
+                        }
+                        <mat-chip class="bg-transparent border-none hover:bg-white my-0 mat-chip-custom">
+                            <input matInput placeholder="Tìm kiếm" formControlName="keyword" class="flex-1 min-w-6rem"
+                                (keydown)="$event.stopPropagation()" [matAutocomplete]="autocompleteForwardMessage">
+                        </mat-chip>
+                    </mat-chip-set>
+                    <!--          }-->
+                </div>
+                <mat-autocomplete autoActiveFirstOption #autocompleteForwardMessage="matAutocomplete"
+                    (optionSelected)="onSelectedUserForwardMessage($event)">
+                    @for (item of searchUserList(); track item.id) {
+                    <mat-option [value]="item.id">
+                        <div class="flex align-items-center justify-content-start gap-2 p-2">
+                            @if (item?.imageUrls?.length) {
+                            <img class="w-2rem h-2rem border-circle object-fill bg-blue-300" [src]="item?.imageUrls[0]">
+                            } @else {
+                            <div
+                                class="w-2rem h-2rem border-circle flex align-items-center justify-content-center bg-blue-300">
+                                <p class="text-white font-semibold">{{ item.fullname | shortName }}</p>
+                            </div>
+                            }
+                            <div class="flex-1 flex flex-column align-items-stretch justify-content-center">
+                                <p class="text-color">{{ item?.fullname }}</p>
+                                <p class="text-gray-500">{{ item.departmentName }} - {{ item.titleName }}</p>
+                            </div>
+                        </div>
+                    </mat-option>
+                    }
+                </mat-autocomplete>
+            </mat-form-field>
+            <div class="flex-1 flex align-items-start justify-content-start">
+                @switch (forwardMessageForm.value['message']?.type) {
+                @case (MessageViewType.TEXT) {
+                <p class="max-w-full w-fit break-all"
+                    [ngClass]="forwardMessageForm.value['message'].role === MessageRole.MEMBER ? 'bg-gray-400' : 'bg-blue-200'"
+                    [innerHTML]="forwardMessageForm.value['message']?.hasMention ? forwardMessageForm.value['message'].innerHTML : forwardMessageForm.value['message'].message">
+                </p>
+                }
+                @case (ChatMessageType.DOC) {
+                <div class="flex flex-column align-items-stretch justify-content-start border-round p-message gap-3">
+                    <div class="flex align-items-center justify-content-start gap-3">
+                        <mat-icon class="text-xl text-blue-300">file_present</mat-icon>
+                        <p class="flex-1 break-all">
+                            {{ forwardMessageForm.value['message'].fileName }}
+                        </p>
+                        <button
+                            class="bg-transparent min-w-0 h-auto border-none flex align-items-center justify-content-center">
+                            <mat-icon class="text-xl">download</mat-icon>
+                        </button>
+                    </div>
+                </div>
+                }
+                @case (MessageViewType.AUDIO) {
+                <audio [src]="forwardMessageForm.value['message'].message" controls></audio>
+                }
+                @case (MessageViewType.VIDEO) {
+                <video [src]="forwardMessageForm.value['message'].message" controls></video>
+                }
+                @case (MessageViewType.IMAGE) {
+                <div class="flex align-items-start justify-content-start flex-wrap gap-2">
+                    @for (imgSrc of forwardMessageForm.value['message'].message; track imgSrc) {
+                    <img class="w-5rem h-5rem border-round object-contain" [src]="imgSrc">
+                    }
+                </div>
+                }
+                }
+            </div>
+        </div>
+    </form>
+</ng-template>

@@ -1,0 +1,284 @@
+<div class="w-full flex flex-column align-items-stretch justify-content-start">
+  <div class="flex-1 grid m-0 bg-white">
+    <div
+      class="col-12 md:col-5 flex flex-column align-items-center justify-content-between p-4 md:p-8">
+      <div class="w-full flex flex-column align-items-center justify-content-between gap-4 md:gap-5">
+        <div class="w-full flex align-items-center justify-content-center md:justify-content-start">
+          <img src="/assets/images/logo_oxii_work.svg">
+        </div>
+        <div class="w-full flex flex-column align-items-center justify-content-center md:justify-content-start gap-5"
+             [class.flex-column]="isShowForgotPass || isUpdatePass"
+             [class.md:align-items-start]="isShowForgotPass || isUpdatePass">
+          <ng-container [ngSwitch]="loginType">
+            <ng-container *ngSwitchCase="LoginTypeEnum.LOGIN">
+              <p class="m-0 font-semibold text-4xl">
+                {{ 'LOGIN_COMPONENT.SIGN_IN' | translate }}
+              </p>
+            </ng-container>
+            <ng-container *ngSwitchCase="LoginTypeEnum.FORGOT_PASSWORD">
+              <p class="m-0 font-semibold text-4xl">
+                {{ 'LOGIN_COMPONENT.FORGOT_PASSWORD' | translate }}
+              </p>
+              <span>{{ 'LOGIN_COMPONENT.ENTER_PHONE_NUMBER_TO_SEND_REQUEST' | translate }}</span>
+            </ng-container>
+            <ng-container *ngSwitchCase="LoginTypeEnum.OTP">
+              <p class="m-0 font-semibold text-4xl">
+                {{ 'LOGIN_COMPONENT.FORGOT_PASSWORD' | translate }}
+                <span>{{ 'LOGIN_COMPONENT.ENTER_OTP' | translate }}</span>
+              </p>
+            </ng-container>
+            <ng-container *ngSwitchCase="LoginTypeEnum.EMAIL">
+              <p class="m-0 font-semibold text-4xl">
+                {{ 'LOGIN_COMPONENT.FORGOT_PASSWORD' | translate }}
+              </p>
+            </ng-container>
+          </ng-container>
+        </div>
+        @switch (loginType) {
+          @case (LoginTypeEnum.LOGIN) {
+            <form [formGroup]="loginFrom" class="w-full">
+              <div class="w-full flex flex-column align-items-start justify-content-center gap-4">
+                <!-- <div class="w-full flex flex-column align-items-start justify-content-center gap-2">
+                  <p class="font-medium m-0">
+                    {{ 'LOGIN_COMPONENT.SIGN_IN_WITH_ROLE' | translate }}
+                    <span class="require">*</span>
+                  </p>
+                  <mat-form-field appearance="outline" class="w-full bg-white">
+                    <mat-select formControlName="loginType">
+                      <mat-option [value]="LoginRoleTypeEnum.ADMIN">
+                        {{ 'LOGIN_COMPONENT.ROLE_ADMIN' | translate }}
+                      </mat-option>
+                      <mat-option [value]="LoginRoleTypeEnum.GUEST">
+                        {{ 'LOGIN_COMPONENT.ROLE_USER' | translate }}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div> -->
+
+                <div class="w-full flex flex-column align-items-start justify-content-center gap-2">
+                  <p class="font-medium m-0">
+                    {{
+                      (loginFrom.value?.loginType === LoginRoleTypeEnum.ADMIN
+                        ? 'LOGIN_COMPONENT.USER_NAME'
+                        : 'LOGIN_COMPONENT.PHONE_NUMBER') | translate
+                    }}
+                    <span class="require">*</span>
+                  </p>
+                  <mat-form-field floatLabel="auto" appearance="outline" class="w-full bg-white">
+                    <input matInput formControlName="email"
+                           [placeholder]="(loginFrom.value?.loginType === LoginRoleTypeEnum.ADMIN
+                                                                    ? 'LOGIN_COMPONENT.PLACEHOLDER_EMAIL'
+                                                                    : 'LOGIN_COMPONENT.PLACEHOLDER_PHONE_NUMBER') | translate"
+                           autocomplete="off">
+                  </mat-form-field>
+                </div>
+                <div class="w-full flex flex-column align-items-start justify-content-center gap-2">
+                  <div class="w-full flex align-items-center justify-content-between">
+                    <span class="font-medium">{{ 'LOGIN_COMPONENT.PASSWORD' | translate }}<span class="require">*</span></span>
+                    <a *ngIf="loginFrom.value?.loginType === LoginRoleTypeEnum.GUEST"
+                       class="cursor-pointer text-blue-300" (click)="onForgotPassword()">
+                      {{ 'LOGIN_COMPONENT.FORGOT_PASSWORD' | translate }}?
+                    </a>
+                  </div>
+                  <mat-form-field floatLabel="auto" appearance="outline" class="w-full bg-white">
+                    <input matInput formControlName="password" autocomplete="off"
+                           [placeholder]="'LOGIN_COMPONENT.PLACEHOLDER_PASSWORD' | translate"
+                           [type]="loginFrom.value['showPassword'] ? 'text' : 'password'">
+                    <i *ngIf="loginFrom.value['showPassword']" matSuffix
+                       class="fa fa-eye pr-3 cursor-pointer"
+                       aria-hidden="true"
+                       (click)="loginFrom.controls['showPassword'].setValue(false)"></i>
+                    <i *ngIf="!loginFrom.value['showPassword']" matSuffix
+                       class="fa fa-eye-slash pr-3 cursor-pointer"
+                       aria-hidden="true"
+                       (click)="loginFrom.controls['showPassword'].setValue(true)"></i>
+                  </mat-form-field>
+                </div>
+                <div class="flex align-items-center justify-content-start gap-3">
+                  <mat-checkbox [checked]="loginFrom.value['remember']">
+                    {{ 'LOGIN_COMPONENT.REMEMBER_SIGN_IN' | translate }}
+                  </mat-checkbox>
+                </div>
+              </div>
+              <button type="submit" class="hidden" (click)="btn.click()"></button>
+            </form>
+          }
+          <!--Gửi OTP-->
+          @case (LoginTypeEnum.FORGOT_PASSWORD) {
+            <form [formGroup]="receivedOtpFrom" class="w-full">
+              <div class="w-full flex flex-column align-items-start justify-content-center gap-4">
+
+                <div class="w-full flex flex-column align-items-start justify-content-center gap-2">
+                  <p class="font-medium m-0">
+                    {{ 'LOGIN_COMPONENT.PHONE_NUMBER' | translate }} <span class="require">*</span>
+                  </p>
+                  <mat-form-field floatLabel="auto" appearance="outline" class="w-full bg-white">
+                    <input matInput formControlName="phone"
+                           [placeholder]="'LOGIN_COMPONENT.PLACEHOLDER_PHONE_NUMBER' | translate"
+                           autocomplete="off">
+                  </mat-form-field>
+                </div>
+              </div>
+              <button type="submit" class="hidden" (click)="btn.click()"></button>
+            </form>
+          }
+          <!--Verify OTP-->
+          @case (LoginTypeEnum.OTP) {
+            <form [formGroup]="otpFrom">
+              <div class="w-full flex flex-column align-items-center justify-content-center gap-4">
+                <div class="flex align-items-center justify-content-center gap-2">
+                  <mat-form-field floatLabel="auto" appearance="outline" class="w-3rem bg-white">
+                    <input #number1 focusElement matInput formControlName="number1" autocomplete="off"
+                           class="text-center text-lg" max="9" maxlength="1" minlength="1" id="number1"
+                           [appAutoTab]="number2" inputmode="numeric">
+                  </mat-form-field>
+                  <mat-form-field floatLabel="auto" appearance="outline" class="w-3rem bg-white">
+                    <input #number2 matInput type="number" formControlName="number2" autocomplete="off"
+                           class="text-center text-lg" max="9" maxlength="1" minlength="1" id="number2"
+                           [appAutoTab]="number3" inputmode="numeric">
+                  </mat-form-field>
+                  <mat-form-field floatLabel="auto" appearance="outline" class="w-3rem bg-white">
+                    <input #number3 matInput type="number" formControlName="number3" autocomplete="off"
+                           class="text-center text-lg" max="9" maxlength="1" minlength="1" id="number3"
+                           [appAutoTab]="number4" inputmode="numeric">
+                  </mat-form-field>
+                  <mat-form-field floatLabel="auto" appearance="outline" class="w-3rem bg-white">
+                    <input #number4 matInput type="number" formControlName="number4" autocomplete="off"
+                           class="text-center text-lg" max="9" maxlength="1" minlength="1" id="number4"
+                           [appAutoTab]="number5" inputmode="numeric">
+                  </mat-form-field>
+                  <mat-form-field floatLabel="auto" appearance="outline" class="w-3rem bg-white">
+                    <input #number5 matInput type="number" formControlName="number5" autocomplete="off"
+                           class="text-center text-lg" max="9" maxlength="1" minlength="1" id="number5"
+                           [appAutoTab]="number6" inputmode="numeric">
+                  </mat-form-field>
+                  <mat-form-field floatLabel="auto" appearance="outline" class="w-3rem bg-white">
+                    <input #number6 matInput type="number" formControlName="number6" autocomplete="off"
+                           class="text-center text-lg" max="9" maxlength="1" minlength="1" id="number6"
+                           inputmode="numeric">
+                  </mat-form-field>
+                </div>
+                <div class="flex align-items-center justify-content-center gap-3">
+                  <span>{{ 'LOGIN_COMPONENT.EXPIRE_OTP' | translate }}</span>
+                  <span class="text-blue-300">{{ countDown < 0 ? '00:00' : (countDown | date:'mm:ss') }}</span>
+                </div>
+              </div>
+            </form>
+          }
+          <!--Set new password-->
+          @case (LoginTypeEnum.UPDATE_PASSWORD) {
+            <form [formGroup]="forgotPasswordFrom" class="w-full">
+              <div class="w-full flex flex-column align-items-stretch justify-content-center gap-4">
+                <div class="flex flex-column align-items-start justify-content-center gap-2">
+                  <span class="font-medium">
+                      {{ 'LOGIN_COMPONENT.NEW_PASSWORD' | translate }}<span class="require">*</span>
+                  </span>
+                  <mat-form-field appearance="outline" class="w-full bg-white">
+                    <input matInput formControlName="newPassword" autocomplete="off"
+                           [type]="forgotPasswordFrom.value?.showNewPassword ? 'text' : 'password'">
+                    <i matSuffix class="fa pr-3 cursor-pointer" aria-hidden="true"
+                       [class.fa-eye]="forgotPasswordFrom.value?.showNewPassword"
+                       [class.fa-eye-slash]="!forgotPasswordFrom.value?.showNewPassword"
+                       (click)="forgotPasswordFrom.controls['showNewPassword'].setValue(!forgotPasswordFrom.value?.showNewPassword)"></i>
+                  </mat-form-field>
+                </div>
+                <div class="flex flex-column align-items-start justify-content-center gap-2">
+                  <span class="font-medium">
+                      {{ 'LOGIN_COMPONENT.REENTER_NEW_PASSWORD' | translate }} <span class="require">*</span>
+                  </span>
+                  <mat-form-field appearance="outline" class="w-full bg-white">
+                    <input matInput formControlName="reNewPassword" autocomplete="off"
+                           [type]="forgotPasswordFrom.value['showReNewPassword'] ? 'text' : 'password'">
+                    <i matSuffix class="fa pr-3 cursor-pointer" aria-hidden="true"
+                       [class.fa-eye]="forgotPasswordFrom.value['showReNewPassword']"
+                       [class.fa-eye-slash]="!forgotPasswordFrom.value['showReNewPassword']"
+                       (click)="forgotPasswordFrom.controls['showReNewPassword'].setValue(!forgotPasswordFrom.value['showReNewPassword'])"></i>
+                  </mat-form-field>
+                </div>
+              </div>
+            </form>
+          }
+        }
+      </div>
+      <div class="w-full flex flex-column align-items-center justify-content-center gap-3">
+        <button #btn type="button" class="w-full text-center bg-blue-300 text-white border-none border-round"
+                (click)="onFirstButtonClick()">
+          {{
+            (loginType === LoginTypeEnum.LOGIN
+              ? 'LOGIN_COMPONENT.SIGN_IN'
+              : loginType === LoginTypeEnum.UPDATE_PASSWORD
+                ? 'LOGIN_COMPONENT.UPDATE_PASSWORD'
+                : 'LOGIN_COMPONENT.SEND_REQUEST') | translate
+          }}
+        </button>
+        @if (loginType !== LoginTypeEnum.LOGIN) {
+          <button type="button"
+                  class="w-full text-center bg-white font-semibold text-color border-1 border-gray-400 border-round"
+                  (click)="onSecondButtonClick()">
+            {{ 'COMMON.BUTTON.BACK' | translate }}
+          </button>
+        }
+      </div>
+    </div>
+    <div class="col-12 md:col-7 p-0 hidden md:flex align-items-center justify-content-center">
+      <img class="w-full ratio-4-3 object-contain" src="assets/images/login_image.svg">
+    </div>
+  </div>
+</div>
+
+
+<!--<div class="w-full h-full flex flex-column align-content-center justify-content-between md:justify-content-center gap-4">-->
+<!--  <div class="flex align-content-center justify-content-center py-6">-->
+<!--    <img src="/assets/images/login_logo.svg">-->
+<!--  </div>-->
+<!--  <div class="flex-1 flex flex-column align-items-center justify-content-start">-->
+<!--    <div class="w-full md:w-auto flex flex-column align-items-center justify-content-center gap-4 bg-white shadow-none md:shadow-3 p-0 md:p-5">-->
+<!--      &lt;!&ndash; Đăng nhập &ndash;&gt;-->
+<!--      <div class="flex flex-column align-items-center justify-content-start">-->
+<!--        <h1 class="text-3xl font-medium text-color my-2">Đăng nhập</h1>-->
+<!--        <p class="text-color-secondary text-base m-0">Đăng nhập để sử dụng hệ thống</p>-->
+<!--      </div>-->
+<!--      <form [formGroup]="loginFrom" class="w-full md:w-auto flex flex-column align-items-stretch justify-content-start gap-3">-->
+<!--        <div class="flex flex-column align-items-stretch justify-content-start gap-3 px-4 md:px-0">-->
+<!--          <div class="w-full md:w-25rem flex flex-column gap-2">-->
+<!--            <label class="text-color font-medium">Email</label>-->
+<!--            <mat-form-field floatLabel="auto" appearance="outline">-->
+<!--              <input matInput type="email" minlength="1" autocomplete="off"-->
+<!--                     maxlength="50" formControlName="email" [email]="true">-->
+<!--            </mat-form-field>-->
+<!--          </div>-->
+<!--          <div class="w-full md:w-25rem flex flex-column gap-2">-->
+<!--            <label class="text-color font-medium">Mật khẩu</label>-->
+<!--            <mat-form-field floatLabel="auto" appearance="outline">-->
+<!--              <input matInput [type]="hidePass() ? 'password' : 'text'">-->
+<!--              <button-->
+<!--                mat-icon-button-->
+<!--                matSuffix-->
+<!--                class="bg-transparent border-none outline-none cursor-pointer flex align-items-center justify-content-center"-->
+<!--                (click)="showHidePass($event)"-->
+<!--                [attr.aria-label]="'Hide password'"-->
+<!--                [attr.aria-pressed]="hidePass()"-->
+<!--              >-->
+<!--                <mat-icon class="h-auto w-auto">{{ hidePass() ? 'visibility_off' : 'visibility' }}</mat-icon>-->
+<!--              </button>-->
+<!--            </mat-form-field>-->
+<!--          </div>-->
+<!--          <div class="w-full flex align-items-center justify-content-between">-->
+<!--            <div class="flex-1 flex align-items-center justify-content-start gap-3">-->
+<!--              <input type="checkbox" formControlName="isKeepSignedIn" class="w-1rem h-1rem m-0">-->
+<!--              <span>Ghi nhớ đăng nhập</span>-->
+<!--            </div>-->
+<!--            <a class="no-underline text-cyan-500 cursor-pointer" (click)="showDialogForgotPass()">-->
+<!--              Quên mật khẩu</a>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--        <div class="flex align-items-center justify-content-center pt-3 px-4 md:px-0">-->
+<!--          <button type="submit" class="uppercase text-white bg-blue-300 border-none flex-1 py-3 outline-none border-round cursor-pointer"-->
+<!--                  (click)="handleLogin()">-->
+<!--            Đăng nhập-->
+<!--          </button>-->
+<!--        </div>-->
+<!--      </form>-->
+<!--    </div>-->
+<!--  </div>-->
+<!--</div>-->
