@@ -13,6 +13,9 @@
     "lint": "ng lint",
     "generate-service": "graphql-codegen --config src/app/cmd/generate-service.js"
   },
+  "engines": {
+    "node": "^16.14.0"
+  },
   "private": true,
   "dependencies": {
     "@angular/animations": "^17.3.0",
