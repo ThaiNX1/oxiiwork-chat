@@ -47,7 +47,7 @@
         (touchend)="onTouchEnd()"
         (dragstart)="onNativeDragStart($event)">
         <img #imgEl
-          class="flex-1 object-contain overflow-hidden" alt=""
+          class="w-full h-full object-contain overflow-hidden" alt=""
           [src]="data?.urls?.[imageSelectedIndex] || ''"
           [style.transform]="imageTransform"
           draggable="false"

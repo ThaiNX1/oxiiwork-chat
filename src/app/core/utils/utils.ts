@@ -2,7 +2,10 @@ export function urlModify(text: string, isMobile = false) {
   if (!text?.length)
     return text
 
-  const cleaned = text.replace(/\u0000/g, ' ').replace(/\s+/g, ' ').trim();
+  const cleaned = text
+    .replace(/\u0000/g, ' ')
+    .replace(/\s+/g, ' ')// thêm bước đổi xuống dòng thành <br>
+    .trim();
   const urlRegex = /(https?:\/\/[^\s"'`<>\]\)]+|www\.[^\s"'`<>\]\)]+)/gi;
   const parts = cleaned?.split(urlRegex);
 
@@ -10,13 +13,8 @@ export function urlModify(text: string, isMobile = false) {
   parts.forEach(x => {
     if (x?.length && x.match(urlRegex)?.length) {
       modifyText += isMobile
-        ? '<a data-url="' + x +
-        '" class="text-blue-300-chat owner-color no-underline break-all word-wrap">' + x +
-        ' (onClick)="onUrlClick(this); return false;"' +
-        '</a>'
-        : '<a href="' + x +
-        '" target="_blank" class="text-blue-300-chat owner-color no-underline break-all word-wrap">' + x +
-        '</a>'
+        ? `<a data-url="${x}" class="text-blue-300-chat owner-color no-underline break-all word-wrap">${x}</a>`
+        : `<a href="${x}" target="_blank" class="text-blue-300-chat owner-color no-underline break-all word-wrap">${x}</a>`;
     } else {
       modifyText += x
     }

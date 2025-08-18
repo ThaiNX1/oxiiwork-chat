@@ -26,8 +26,8 @@ export class DialogImageViewerComponent {
 
   /** Image */
   currentRotate = 0
-  currentScale = 1
-  styleScale = 'scale(1)'
+  currentScale = 0.8
+  styleScale = 'scale(0.8)'
 
   // Pan state
   tx = 0;

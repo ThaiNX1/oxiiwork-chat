@@ -1,3 +1,18 @@
-// #mobile-contenteditable-input-text-message, #contenteditable-input-text-message {
-//     resize: none !important;
-// }
+/* Pane của CDK overlay */
+.msg-overlay-pane {
+    transform-origin: top center;            /* phù hợp kiểu đặt dưới-giữa */
+    animation: fadeInScale 140ms cubic-bezier(.2,.8,.2,1);
+  }
+  
+  @keyframes fadeInScale {
+    from { opacity: 0; transform: translateY(-4px) scale(.98); }
+    to   { opacity: 1; transform: translateY(0)    scale(1);  }
+  }
+  
+  /* (tuỳ chọn) animation khi đóng */
+  .msg-overlay-pane.closing {
+    animation: fadeOutScale 100ms ease-in forwards;
+  }
+  @keyframes fadeOutScale {
+    to { opacity: 0; transform: translateY(-4px) scale(.98); }
+  }
