@@ -157,7 +157,7 @@ export function removeEmptySpan(members: [any]) {
   const spans2 = Array.from(document.querySelector('[contenteditable]')?.querySelectorAll('span') || []);
   const sel = window.getSelection();
   console.log('sel', sel);
-  
+
   const focusNode = sel?.focusNode;
   console.log('focusNode', focusNode);
   const focusEl =

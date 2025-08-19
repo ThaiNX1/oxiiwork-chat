@@ -20,7 +20,7 @@ import {
   ViewContainerRef
 } from '@angular/core';
 import { FormArray, FormControl, FormGroup, Validators } from '@angular/forms';
-import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { MatDrawer } from '@angular/material/sidenav';
 import { DomSanitizer } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
@@ -132,8 +132,8 @@ export class GuestChatComponent
   overlayTemplates: any = [];
 
   /** Mention */
-  @ViewChild('autocompleteTrigger')
-  autocompleteTrigger!: MatAutocompleteTrigger;
+  @ViewChild('autocompleteTrigger') autocompleteTrigger!: MatAutocompleteTrigger;
+  @ViewChild('auto', { static: false }) auto!: MatAutocomplete;
   mentionMembers = signal<any>([]);
   activeSuggestionIndex = 0;
   lastKeyEventTimestamp = 0;
@@ -2921,7 +2921,7 @@ export class GuestChatComponent
         // this.autocompleteTrigger.closePanel();
         // event.preventDefault();
         // this.onReRenderMessage(0, {});
-        // insertSpaceEscapingElementAtCaret('')
+        insertSpaceEscapingElementAtCaret('')
         console.log('isCaretInOrAfterMention', getCaretSpanInfo());
         break;
     }
@@ -2938,12 +2938,14 @@ export class GuestChatComponent
           event.preventDefault();
           this.activeSuggestionIndex =
             (this.activeSuggestionIndex + 1) % this.mentionMembers().length;
+          this.scrollActiveIntoView();
           return true;
         case 'ArrowUp':
           event.preventDefault();
           this.activeSuggestionIndex =
             (this.activeSuggestionIndex - 1 + this.mentionMembers().length) %
             this.mentionMembers().length;
+          this.scrollActiveIntoView();
           return true;
         case 'Enter':
           const _editor = document.querySelector('[contenteditable]');
@@ -2953,7 +2955,6 @@ export class GuestChatComponent
           event.preventDefault();
           return true;
         default:
-
           break;
       }
     }
@@ -2974,8 +2975,8 @@ export class GuestChatComponent
     if (mention?.length > 1 && mention.startsWith('@')) {
       const _mentionMembers =
         this.conversationSelected()?.members?.filter((item: any) =>
-          `${item?.user?.fullname?.toLowerCase()}`.includes(_.cloneDeep(mention)?.replace('@','')?.toLowerCase()) ||
-          removeVietnameseTones(`${item?.user?.fullname?.toLowerCase()}`).includes(removeVietnameseTones(_.cloneDeep(mention)?.replace('@','')?.toLowerCase()))
+          `${item?.user?.fullname?.toLowerCase()}`.includes(_.cloneDeep(mention)?.replace('@', '')?.toLowerCase()) ||
+          removeVietnameseTones(`${item?.user?.fullname?.toLowerCase()}`).includes(removeVietnameseTones(_.cloneDeep(mention)?.replace('@', '')?.toLowerCase()))
         ) || [];
       this.mentionMembers.set(_mentionMembers);
     } else if (mention?.length === 1 && mention.startsWith('@')) {
@@ -3205,7 +3206,7 @@ export class GuestChatComponent
       { item: item }
     );
     this.messageActionOverlayRef.attach(portal);
-    if(!this.commonService.smallScreen()){
+    if (!this.commonService.smallScreen()) {
       this.messageActionOverlayRefOutsidePointerEvents =
         this.messageActionOverlayRef.outsidePointerEvents().subscribe((value) => {
           setTimeout(() => {
@@ -3213,7 +3214,7 @@ export class GuestChatComponent
           });
           this.messageActionOverlayRefOutsidePointerEvents.unsubscribe();
         });
-    } else{
+    } else {
       this.messageActionOverlayRefOutsidePointerEvents =
         this.messageActionOverlayRef.backdropClick().subscribe((value) => {
           setTimeout(() => {
@@ -4228,6 +4229,28 @@ export class GuestChatComponent
       // a.click();
       // a.remove();
       window.open(item.urls[0], '_blank');
+    }
+  }
+
+  scrollActiveIntoView() {
+    const panelEl: HTMLElement | undefined = this.auto?.panel?.nativeElement;
+    if (!panelEl) return;
+
+    const optionEls = panelEl.querySelectorAll<HTMLElement>('mat-option');
+    const opt = optionEls[this.activeSuggestionIndex];
+    if (!opt) return;
+
+    const panelRect = panelEl.getBoundingClientRect();
+    const optRect = opt.getBoundingClientRect();
+
+    // nếu option nằm phía trên vùng nhìn thấy
+    if (optRect.top < panelRect.top) {
+      panelEl.scrollTop += (optRect.top - panelRect.top);
+    }
+
+    // nếu option nằm phía dưới vùng nhìn thấy
+    if (optRect.bottom > panelRect.bottom) {
+      panelEl.scrollTop += (optRect.bottom - panelRect.bottom);
     }
   }
 }
