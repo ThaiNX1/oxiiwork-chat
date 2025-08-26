@@ -497,10 +497,6 @@
                                               {{ item.fileName }}
                                             </p>
                                             @if (item.urls?.length) {
-                                              <!-- <a [href]="endCodeUriFileDownLoad(item.urls[0])" target="_blank"
-                                class="bg-transparent owner-color min-w-0 h-auto border-none flex align-items-center justify-content-center">
-                                <mat-icon class="text-xl">download</mat-icon>
-                              </a> -->
                                               <button
                                                 class="bg-transparent owner-color min-w-0 h-auto border-none flex align-items-center justify-content-center"
                                                 (click)="onDownloadFile(item)">
@@ -3084,26 +3080,12 @@
             <!-- <mat-icon matPrefix class="text-3xl text-gray-500">search</mat-icon> -->
           </mat-form-field>
         </form>
-        <!-- <div class="w-3rem h-3rem border-circle flex align-items-center justify-content-center bg-info-chat">
-        @if (user?.officeUser?.imageUrls?.length) {
-        <img class="w-full h-full border-circle object-contain" [src]="user?.officeUser?.imageUrls[0]">
-        } @else {
-        <p class="text-white font-semibold">{{ user?.officeUser?.fullname | shortName }}</p>
-        }
-      </div> -->
-        <!-- <div class="flex flex-column align-items-stretch justify-content-start gap-1">
-        <p class="font-semibold">{{'CHAT_COMPONENT.MESSAGE' | translate}}</p>
-      </div> -->
       </div>
       <div class="flex align-items-center justify-content-end">
-        <!--        <button class="bg-transparent border-none flex align-items-center justify-content-center">-->
-        <!--          <mat-icon class="text-gray-500 text-2xl">search</mat-icon>-->
-        <!--        </button>-->
         <button
           class="bg-transparent border-none flex align-items-center justify-content-center"
           [matMenuTriggerFor]="mobileConversationAction">
           <img src="assets/images/trailing-icon.svg" alt="" />
-          <!-- <mat-icon class="text-gray-500 text-2xl">more_vert</mat-icon> -->
         </button>
       </div>
     } @else {
@@ -3184,10 +3166,10 @@
         'CHAT_COMPONENT.NEW_CONVERSATION' | translate
       }}</span>
     </a>
-    <!-- <a mat-menu-item class="flex align-items-center justify-content-start gap-2"
+    <a mat-menu-item class="flex align-items-center justify-content-start gap-2"
       [routerLink]="['/guest/chat/mobile/create-conversation']" [queryParams]="{type: ChatConversationType.Group}">
       <span class="text-color">{{'CHAT_COMPONENT.NEW_GROUP' | translate}}</span>
-    </a> -->
+    </a>
   </ng-template>
 </mat-menu>
 

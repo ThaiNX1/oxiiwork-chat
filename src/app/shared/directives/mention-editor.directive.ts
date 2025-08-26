@@ -37,8 +37,8 @@ export class MentionEditorDirective implements AfterViewInit {
 
   // Android/iOS: beforeinput & input là chính xác nhất để lấy chuỗi thực
   @HostListener('beforeinput') onBeforeInput(e: InputEvent) {
-    const data = (e as any).data; // ký tự sắp chèn
-    if ((e.inputType || '').startsWith('insert') && data === ' ') {
+    const data = (e as any)?.data; // ký tự sắp chèn
+    if ((e?.inputType || '').startsWith('insert') && data === ' ') {
       this.pendingSpace = true; // ghi nhận space từ IME
     }
     this.queueDetect();

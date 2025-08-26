@@ -8,11 +8,7 @@
       </div>
       <span class="font-semibold">Tạo nhóm chat</span>
     </a> -->
-  } @else {
-    <div class="flex align-items-center justify-content-start overflow-auto flex-nowrap gap-2 p-2">
-    </div>
-  }
-  <div
+    <div
     class="h-full flex-1-custom overflow-auto flex flex-column align-items-stretch justify-content-start overflow-auto">
     @if (!filterForm.value['keyword']?.length) {
       <div class="flex-1 flex flex-column align-items-center justify-content-center gap-3">
@@ -39,7 +35,122 @@
         </a>
       </cdk-virtual-scroll-viewport>
     }
-  </div>
+    </div>
+  } @else {
+    <div class="flex-1-custom overflow-auto flex flex-column align-items-stretch justify-content-start p-3">
+      <form
+      [formGroup]="newGroupConversationForm"
+      (ngSubmit)="onSearchUser(ChatConversationType.Group)"
+      class="flex flex-column align-items-stretch justify-content-start gap-3">
+        <div class="flex align-items-center justify-content-start gap-3 mt-3">
+          <div
+            class="flex align-items-center justify-content-center bg-gray-02 w-3rem h-3rem border-circle cursor-pointer"
+            (click)="groupAvatar.click()">
+            @if (newGroupConversationForm.value['avatarUrl']) {
+              <img
+                class="w-3rem h-3rem border-circle object-cover"
+                [src]="newGroupConversationForm.value['avatarUrl']" />
+            } @else {
+              <img src="assets/images/ic_camera.svg" alt="camera" />
+            }
+          </div>
+          <mat-form-field
+            floatLabel="auto"
+            appearance="outline"
+            class="flex-1 bg-white">
+            <input
+              matInput
+              placeholder="Nhập tên của nhóm"
+              formControlName="name" />
+          </mat-form-field>
+        </div>
+        <mat-divider class="m-0"></mat-divider>
+        <mat-form-field floatLabel="auto" appearance="outline" class="w-full bg-white">
+          <input matInput placeholder="Tìm kiếm..." formControlName="keyword" />
+          <img matPrefix src="assets/images/guest/ic_search.svg" class="mx-2" />
+        </mat-form-field>
+        <input
+          #groupAvatar
+          type="file"
+          formControlName="file"
+          class="hidden"
+          accept="image/*"
+          (change)="onUploadAvatar($event)" />
+        <button type="submit" class="hidden"></button>
+      </form>
+      <div
+        class="flex-1 flex align-items-stretch justify-content-start overflow-auto">
+        <cdk-virtual-scroll-viewport
+          class="flex-1 border-none gray-500-scroll overflow-auto"
+          itemSize="20">
+          <div
+          *cdkVirtualFor="let item of searchUsers()"
+          class="flex align-items-center justify-content-start gap-2 p-2 border-round cursor-pointer hover:bg-gray-300"
+          [class.bg-gray-400]="item?.isMemberGroup"
+          (click)="onCreateConversation(item, ChatConversationType.Group)">
+          @if (item?.imageUrls?.length) {
+            <img
+              class="w-2rem h-2rem border-circle object-cover bg-blue-300"
+              [src]="item?.imageUrls[0]" />
+          } @else {
+            <div
+              class="w-2rem h-2rem border-circle flex align-items-center justify-content-center bg-blue-300">
+              @if (item?.imageUrls?.length) {
+                <img
+                  [src]="item.imageUrls[0]"
+                  class="w-full h-full object-cover border-circle" />
+              } @else {
+                <p class="text-white font-semibold">
+                  {{ item.fullname | shortName }}
+                </p>
+              }
+            </div>
+          }
+          <div
+            class="flex-1 flex flex-column align-items-stretch justify-content-center">
+            <p class="text-color m-0">{{ item?.fullname }}</p>
+            <p class="text-gray-500 m-0">{{ item.departmentName }}</p>
+          </div>
+          </div>
+        </cdk-virtual-scroll-viewport>
+      </div>
+      <div class="flex align-items-center justify-content-start p-2 gap-3">
+        <div class="flex-1 flex align-items-stretch justify-content-start flex-nowrap overflow-auto none-scroll">
+          @for (
+            form of groupConversationMemberArray.controls;
+            track form.value.id;
+            let i = $index
+          ) {
+            <div
+              class="py-1 px-2 bg-gray-300 border-round-2xl flex align-items-center justify-content-center relative">
+              @if (form.value?.imageUrls?.length) {
+                <img
+                  class="w-2rem h-2rem border-circle object-cover bg-blue-300"
+                  [src]="form.value?.imageUrls[0]" />
+              } @else {
+                <div
+                  class="w-2rem h-2rem border-circle flex align-items-center justify-content-center bg-blue-300">
+                  <p class="text-white font-semibold">
+                    {{ form.value.fullname | shortName }}
+                  </p>
+                </div>
+              }
+              <mat-icon
+                class="text-gray-500 text-lg cursor-pointer absolute right-0 top-0"
+                (click)="removeMemberFromGroup(i)">cancel</mat-icon>
+            </div>
+          }
+        </div>
+        @if(groupConversationMemberArray.controls?.length){
+          <button
+            class="bg-transparent border-none cursor-pointer flex align-items-center justify-content-center"
+            (click)="onCreateGroupConversation()">
+            <mat-icon class="text-blue-500 text-3xl">send</mat-icon>
+          </button>
+        }
+      </div>
+    </div>
+  }
 </div>
 
 <!--Header mobile-->

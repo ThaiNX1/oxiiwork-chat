@@ -12,6 +12,7 @@ import {
   Component,
   ElementRef,
   inject,
+  Injector,
   OnDestroy,
   OnInit,
   signal,
@@ -31,6 +32,7 @@ import {
   compareAsc,
   endOfDay,
   format,
+  getDate,
   startOfDay,
 } from 'date-fns';
 import * as _ from 'lodash';
@@ -63,6 +65,9 @@ import {
   urlVerify
 } from '../../../core/utils/utils';
 import { GuestService } from '../guest.service';
+import { Store } from '@ngxs/store';
+import { ConversationState, Reset } from './state/conversation.state';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-guest-chat',
@@ -175,6 +180,7 @@ export class GuestChatComponent
 
   /** Mobile */
   @ViewChild('mobileDrawer') mobileDrawer!: MatDrawer;
+  newGroupConversationMobile: any;
 
   /** Service */
   websocketService = inject(WebsocketService);
@@ -189,11 +195,17 @@ export class GuestChatComponent
   reactionDetailsOrigin = signal<Reaction[]>([]);
   messageKeyPress = signal<string>('');
   endCodeUriFileDownLoad = endCodeUriFileDownLoad;
+
+  /** Extra */
+  timer: any;
+  prevTime = new Date();
+
   constructor(
     private overlay: Overlay,
     private elementRef: ElementRef,
     private viewContainerRef: ViewContainerRef,
-    private location: Location
+    private location: Location,
+    private injector: Injector,
   ) {
     super();
     this.addEditDialogSetting = {
@@ -226,6 +238,10 @@ export class GuestChatComponent
         templateCode: 'reactionDetails',
       },
     };
+    this.newGroupConversationMobile = toSignal(
+      this.injector.get(Store).select(ConversationState.value),
+      { initialValue: null }
+    );
   }
 
   override async ngAfterViewInit(): Promise<void> {
@@ -370,6 +386,18 @@ export class GuestChatComponent
           }
         }
       });
+
+    this.timer = setInterval(async () => {
+      const currentTime = new Date();
+      if (getDate(this.prevTime) !== getDate(currentTime)) {
+        this.prevTime = currentTime;
+        await this.onGetConversations({
+          keyword: '',
+          page: 0,
+          size: 100,
+        });
+      }
+    }, 60000)
   }
 
   onValueChange() {
@@ -515,6 +543,13 @@ export class GuestChatComponent
           !response?.conversations?.length ||
           (response?.conversations?.length < filter?.size && filter.page === 0),
       };
+
+      console.log('newConversationsMobile', this.newGroupConversationMobile());
+      if (this.commonService.smallScreen() && this.newGroupConversationMobile()) {
+        const conversationSelected = this.conversations().find((conv: any) => conv.id === this.newGroupConversationMobile()?.id);
+        this.onSelectConversation(conversationSelected);
+        this.injector.get(Store).dispatch(Reset);
+      }
     }
   }
 
@@ -4220,6 +4255,7 @@ export class GuestChatComponent
       //   .then(blob => {
       //     saveAs(blob, item.fileName);
       //   })\
+      console.log(item.urls[0], item.fileName);
       (window as any).flutter_inappwebview.callHandler('downloadFile', item.urls[0], item.fileName);
     } else {
       // const a = document.createElement('a');
