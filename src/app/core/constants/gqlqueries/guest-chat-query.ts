@@ -101,6 +101,30 @@ query chatConversationDetail($conversationId: String, $receiverId: String) {
 }
 `;
 
+export const CONVERSATION_GET_MEMBER_DETAIL = gql`
+query chatConversationDetail($conversationId: String, $receiverId: String) {
+  chatConversationDetail(
+    conversationId: $conversationId
+    receiverId: $receiverId
+  ) {
+    id
+    members {
+      admin
+      user {
+        id
+        fullname
+        departmentName
+        titleName
+        imageUrls
+        code
+        phone
+        email
+      }
+    }
+  }
+}
+`;
+
 export const CONVERSATION_GET_MESSAGE = gql`
 query chatMessageList($filters: ChatMessageGetListFilter!) {
   chatMessageList(filters: $filters) {

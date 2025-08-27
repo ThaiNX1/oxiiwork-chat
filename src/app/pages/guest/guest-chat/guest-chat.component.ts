@@ -58,9 +58,11 @@ import {
   endCodeUriFileDownLoad,
   getCaretSpanInfo,
   insertSpaceEscapingElementAtCaret,
+  logCaretPosition,
   removeEmptySpan,
   removeVietnameseTones,
   string2date,
+  unwrapFontTags,
   urlModify,
   urlVerify
 } from '../../../core/utils/utils';
@@ -83,6 +85,7 @@ export class GuestChatComponent
   MessageRole = MessageRole;
   ChatMessageType = ChatMessageType;
   ChatConversationType = ChatConversationType;
+  ConversationActionType = ConversationActionType;
   ChatMessageAct = {
     ...ChatMessageAct,
     COPY: 'COPY',
@@ -92,7 +95,7 @@ export class GuestChatComponent
   conversationSelectedFilterForm!: FormGroup;
   sendMessageForm!: FormGroup;
   mentionRegex =
-    /\[@[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\]|\[@all\]/gm;
+    /\[@(all|[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12})\](?=\s|$)/g;
   urlRegex = /((http|https)?:\/\/[^\s]+)/g;
   conversationSelected = signal<any>(null);
   conversations = signal<any>([]);
@@ -543,8 +546,6 @@ export class GuestChatComponent
           !response?.conversations?.length ||
           (response?.conversations?.length < filter?.size && filter.page === 0),
       };
-
-      console.log('newConversationsMobile', this.newGroupConversationMobile());
       if (this.commonService.smallScreen() && this.newGroupConversationMobile()) {
         const conversationSelected = this.conversations().find((conv: any) => conv.id === this.newGroupConversationMobile()?.id);
         this.onSelectConversation(conversationSelected);
@@ -1252,9 +1253,10 @@ export class GuestChatComponent
         if (urlVerify(_newMessage.message))
           _newMessage = {
             ..._newMessage,
+            message: _newMessage.message.replace(/\r?\n/g, '<br>'),
             hasLink: urlVerify(data.message?.message),
             innerHTML: this.sanitizer.bypassSecurityTrustHtml(
-              urlModify(data.message?.message, this.commonService.smallScreen()).replace(/\\r\\n|\\n|\\r/g, '<br>')
+              urlModify(data.message?.message, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
             ),
             previewLink: _.last(data.message?.message?.match(this.urlRegex)),
           };
@@ -1273,12 +1275,12 @@ export class GuestChatComponent
                 `data-id="all" data-fullname="Tất cả">` +
                 `@All</span>`;
             }
-          );
+          ).replace(/\r?\n/g, '<br>');
           _newMessage = {
             ..._newMessage,
             hasMention: true,
             innerHTML: this.sanitizer.bypassSecurityTrustHtml(
-              urlModify(_messageMention, this.commonService.smallScreen()).replace(/\\r\\n|\\n|\\r/g, '<br>')
+              urlModify(_messageMention, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
             ),
           };
         }
@@ -1635,7 +1637,7 @@ export class GuestChatComponent
       // console.log('message:edit', data);
 
       const _messages = _.cloneDeep(this.conversationSelected()?.messages);
-      const _messageIndex = _messages.findIndex(
+      const _messageIndex = _messages?.findIndex(
         (mess: any) => mess.id === data.message?.id
       );
       if (this.conversationSelected()?.id === data.conversationId) {
@@ -1646,7 +1648,7 @@ export class GuestChatComponent
               ..._messages[_messageIndex],
               hasLink: urlVerify(data.message?.message),
               innerHTML: this.sanitizer.bypassSecurityTrustHtml(
-                urlModify(data.message?.message, this.commonService.smallScreen()).replace(/\\r\\n|\\n|\\r/g, '<br>')
+                urlModify(data.message?.message, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
               ),
               previewLink: _.last(data.message?.message?.match(this.urlRegex)),
             };
@@ -1665,12 +1667,12 @@ export class GuestChatComponent
                   `data-id="all" data-fullname="Tất cả">` +
                   `@All</span>`;
               }
-            );
+            ).replace(/\r?\n/g, '<br>');
             _messages[_messageIndex] = {
               ..._messages[_messageIndex],
               hasMention: true,
               innerHTML: this.sanitizer.bypassSecurityTrustHtml(
-                urlModify(_messageMention, this.commonService.smallScreen()).replace(/\\r\\n|\\n|\\r/g, '<br>')
+                urlModify(_messageMention, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
               ),
             };
           }
@@ -1795,7 +1797,7 @@ export class GuestChatComponent
               hasLink: urlVerify(_newMessage.message),
               innerHTML: urlVerify(_newMessage.message)
                 ? this.sanitizer.bypassSecurityTrustHtml(
-                  urlModify(_newMessage.message, this.commonService.smallScreen()).replace(/\\r\\n|\\n|\\r/g, '<br>')
+                  urlModify(_newMessage.message, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
                 )
                 : _newMessage.message,
             };
@@ -1813,8 +1815,8 @@ export class GuestChatComponent
           }
           if (mess.message?.match(this.mentionRegex)?.length) {
             // let _messageMention = urlModify(mess.message)
-            const withBr = mess.message.replace(/\\r\\n|\\n|\\r|\r\n|\n|\r/g, '<br/>');
-            const _messageMention = withBr?.replace(
+            // const withBr = mess.message.replace(/\\r\\n|\\n|\\r|\r\n|\n|\r/g, '<br/>');
+            const _messageMention = mess.message?.replace(
               this.mentionRegex,
               (match: any) => {
                 const mentionUser = mess?.mentionTo?.find(
@@ -1828,12 +1830,12 @@ export class GuestChatComponent
                   `data-id="all" data-fullname="Tất cả">` +
                   `@All</span>`;
               }
-            );
+            ).replace(/\r?\n/g, '<br>');
             _newMessage = {
               ..._newMessage,
               hasMention: true,
               innerHTML: this.sanitizer.bypassSecurityTrustHtml(
-                urlModify(_messageMention, this.commonService.smallScreen()).replace(/\\r\\n|\\n|\\r/g, '<br>')
+                urlModify(_messageMention, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
               ),
             };
           }
@@ -2052,7 +2054,7 @@ export class GuestChatComponent
           type: ChatMessageType.LOCATION,
           hasLink: true,
           innerHTML: this.sanitizer.bypassSecurityTrustHtml(
-            urlModify(_locationMessage, this.commonService.smallScreen()).replace(/\\r\\n|\\n|\\r/g, '<br>')
+            urlModify(_locationMessage, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
           ),
         };
         break;
@@ -2093,7 +2095,7 @@ export class GuestChatComponent
               hasMention: hasMention,
               hasLink: urlVerify(_message),
               innerHTML: this.sanitizer.bypassSecurityTrustHtml(
-                urlModify(_message, this.commonService.smallScreen()).replace(/\\r\\n|\\n|\\r/g, '<br>')
+                urlModify(_message, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
               ),
             };
           }
@@ -2162,11 +2164,11 @@ export class GuestChatComponent
               `data-id="all" data-fullname="Tất cả">` +
               `@All</span>`;
           }
-        );
+        ).replace(/\r?\n/g, '<br>');
         _newMessage = {
           ..._newMessage,
           innerHTML: this.sanitizer.bypassSecurityTrustHtml(
-            urlModify(_messageMention, this.commonService.smallScreen()).replace(/\\r\\n|\\n|\\r/g, '<br>')
+            urlModify(_messageMention, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
           ),
         };
       }
@@ -2472,7 +2474,7 @@ export class GuestChatComponent
           type: ChatMessageType.LOCATION,
           hasLink: true,
           innerHTML: this.sanitizer.bypassSecurityTrustHtml(
-            urlModify(_locationMessage, this.commonService.smallScreen()).replace(/\\r\\n|\\n|\\r/g, '<br>')
+            urlModify(_locationMessage, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
           ),
         };
         break;
@@ -2519,11 +2521,11 @@ export class GuestChatComponent
             // format gửi tin nhắn
             args = {
               ...args,
-              message: _message?.replace(/\u0000/g, ' ')?.replace('\u00A0', ' '),
+              message: _message?.replace(/\u0000/g, ' ')?.replace('\u00A0', ' ').replace(/\r?\n/g, '<br>'),
               hasMention: hasMention,
               hasLink: urlVerify(_message),
               innerHTML: this.sanitizer.bypassSecurityTrustHtml(
-                urlModify(_message, this.commonService.smallScreen()).replace(/\\r\\n|\\n|\\r/g, '<br>')
+                urlModify(_message, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
               ),
             };
           }
@@ -2538,6 +2540,7 @@ export class GuestChatComponent
       (args || this.messageFiles?.length) &&
       ((event.key === 'Enter' && !event.shiftKey) || sendNow)
     ) {
+      event.preventDefault();
       if (this.sendMessageForm.value['replyMessage']) {
         args = {
           ...args,
@@ -2567,7 +2570,7 @@ export class GuestChatComponent
           avatar: 'assets/images/guest/avatar_default.svg',
         },
         createdAt: new Date(),
-        message: args?.message,
+        message: args?.message?.replace(/\r?\n/g, '<br>'),
         fileName: args?.fileName,
         hasMention: args?.hasMention,
         hasLink: args?.hasLink,
@@ -2578,6 +2581,7 @@ export class GuestChatComponent
         previewLink: _.last(args?.message?.match(this.urlRegex)),
       };
       if (args?.hasMention) {
+        // const _message = _newMessage.message.replace(/\r?\n/g, '<br>');
         const _messageMention = _newMessage.message.replace(
           this.mentionRegex,
           (match: any) => {
@@ -2592,11 +2596,11 @@ export class GuestChatComponent
               `data-id="all" data-fullname="Tất cả">` +
               `@All</span>`;
           }
-        );
+        ).replace(/\r?\n/g, '<br>');
         _newMessage = {
           ..._newMessage,
           innerHTML: this.sanitizer.bypassSecurityTrustHtml(
-            urlModify(_messageMention, this.commonService.smallScreen()).replace(/\\r\\n|\\n|\\r/g, '<br>')
+            urlModify(_messageMention, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
           ),
         };
       }
@@ -2939,6 +2943,7 @@ export class GuestChatComponent
         },
         ...(this.conversationSelected()?.members || []),
       ]);
+      this.activeSuggestionIndex = 0;
       this.autocompleteTrigger.openPanel();
       return true;
     }
@@ -2949,15 +2954,50 @@ export class GuestChatComponent
         break;
       case 'Backspace':
         // Loại bỏ span rỗng
-        console.log('isCaretInOrAfterMention', getCaretSpanInfo());
         removeEmptySpan(this.conversationSelected()?.members || []);
         break;
       case 'Space':
-        // this.autocompleteTrigger.closePanel();
-        // event.preventDefault();
-        // this.onReRenderMessage(0, {});
-        insertSpaceEscapingElementAtCaret('')
-        console.log('isCaretInOrAfterMention', getCaretSpanInfo());
+        requestAnimationFrame(() => {
+          const info = logCaretPosition(document.querySelector('[contenteditable]'));
+          const fullname = info?.span?.getAttribute('data-fullname')
+          if (fullname?.length && ((info?.offset ?? 0) >= (fullname?.length ?? 0)) ||
+                (info?.absPos ?? 0) > (fullname?.length ?? 0)) {
+            const parent = info?.span?.parentNode;
+            if (parent) {
+              const t = document.createTextNode('\u200B');
+              parent.insertBefore(t, null);
+              const r = document.createRange();
+              r.setStart(t, Math.max(0, Math.min(t.length ?? 0, t.data.length)));
+              r.collapse(true);
+              const sel = window.getSelection();
+              sel?.removeAllRanges();
+              sel?.addRange(r);
+              parent.normalize();
+            }
+          }
+        })
+        break;
+      case 'ArrowLeft':
+      case 'ArrowRight':
+        requestAnimationFrame(() => {
+          const info = logCaretPosition(document.querySelector('[contenteditable]'));
+          const fullname = info?.span?.getAttribute('data-fullname')
+          if (fullname?.length && ((info?.offset ?? 0) >= (fullname?.length ?? 0)) ||
+                (info?.absPos ?? 0) > (fullname?.length ?? 0)) {
+            const parent = info?.span?.parentNode;
+            if (parent) {
+              const t = document.createTextNode('\u200B');
+              parent.insertBefore(t, null);
+              const r = document.createRange();
+              r.setStart(t, Math.max(0, Math.min(t.length ?? 0, t.data.length)));
+              r.collapse(true);
+              const sel = window.getSelection();
+              sel?.removeAllRanges();
+              sel?.addRange(r);
+              parent.normalize();
+            }
+          }
+        })
         break;
     }
 
@@ -3030,7 +3070,10 @@ export class GuestChatComponent
     if (!this.mentionMembers()?.length || !mention?.length || !element?.textContent?.trim().length) {
       this.autocompleteTrigger.closePanel();
     } else {
-      if (!this.autocompleteTrigger.panelOpen && mention.startsWith('@')) this.autocompleteTrigger.openPanel();
+      if (!this.autocompleteTrigger.panelOpen && mention.startsWith('@')){
+        this.activeSuggestionIndex = 0;
+        this.autocompleteTrigger.openPanel();
+      }
     }
     return false;
   }
@@ -3113,6 +3156,7 @@ export class GuestChatComponent
         sp.remove();
       }
     }
+    unwrapFontTags(document.querySelector('[contenteditable]') as HTMLElement);
   }
 
   onResizeTextboxChat() {
@@ -3363,7 +3407,7 @@ export class GuestChatComponent
           this.viewContainerRef
         );
         this.messageReActionOverlayRef.attach(portal);
-      }, 500);
+      }, 1200);
     } else {
       return;
     }
@@ -3620,6 +3664,7 @@ export class GuestChatComponent
         });
         break;
     }
+    this.onCloseMessageAction(null);
   }
 
   async onSubmitMessageEdit(message: any, isSave: boolean = false) {
@@ -3640,7 +3685,7 @@ export class GuestChatComponent
           ..._messages[messageEditIndex],
           hasLink: true,
           innerHTML: this.sanitizer.bypassSecurityTrustHtml(
-            urlModify(_messages[messageEditIndex].messageEdited, this.commonService.smallScreen()).replace(/\\r\\n|\\n|\\r/g, '<br>')
+            urlModify(_messages[messageEditIndex].messageEdited, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
           ),
         };
       // if (_messages[messageEditIndex].messageEdited?.match(this.mentionRegex)?.length)
@@ -3690,6 +3735,7 @@ export class GuestChatComponent
           },
           ...(this.conversationSelected()?.members || []),
         ]);
+        this.activeSuggestionIndex = 0;
         this.autocompleteEditMessageTrigger.openPanel();
         break;
       // case 'Backspace':
@@ -3752,7 +3798,7 @@ export class GuestChatComponent
           ..._messages[messageEditIndex],
           hasLink: true,
           innerHTML: this.sanitizer.bypassSecurityTrustHtml(
-            urlModify(_messages[messageEditIndex].messageEdited, this.commonService.smallScreen()).replace(/\\r\\n|\\n|\\r/g, '<br>')
+            urlModify(_messages[messageEditIndex].messageEdited, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
           ),
         };
     }
@@ -3931,10 +3977,10 @@ export class GuestChatComponent
         to: endOfDay(new Date()).getTime(),
       };
     }
-    if (this.conversationSelectedFilterForm.value['senderId'])
+    if (this.conversationSelectedFilterForm.value['senderId']?.length)
       filter = {
         ...filter,
-        senderIds: [this.conversationSelectedFilterForm.value['senderId']],
+        senderIds: this.conversationSelectedFilterForm.value['senderId'],
       };
     this.searchByDate.update((value) => false);
     this.isSearching.set(true);
@@ -4234,17 +4280,35 @@ export class GuestChatComponent
     preCaretRange.setEnd(range.endContainer, range.endOffset);
     const caretPos = preCaretRange.toString().length;
 
-    // Tìm vị trí @ gần nhất trước caret
-    const atPos = fullText.lastIndexOf('@', caretPos);
-    if (atPos === -1) return '';
-
-    // Lấy từ @ đến khi gặp khoảng trắng hoặc hết chuỗi
-    const afterAt = fullText.slice(atPos, caretPos).match(/^@\S*\s{0,2}/);
-    let afterAtInput = afterAt['input']
-    if (afterAt['input'].indexOf('\n') > -1) {
-      afterAtInput = afterAt['input'].slice(0, afterAt['input'].indexOf('\n'));
+    // Quét ngược tối đa 4 khoảng trắng hoặc dừng khi gặp xuống dòng
+    let spaces = 0;
+    let start = caretPos;
+    while (start > 0) {
+      const ch = fullText.charAt(start - 1);
+      if (ch === '\n') break;
+      if (ch === ' ') {
+        spaces++;
+        if (spaces > 4) break; // chỉ cho phép tối đa 4 khoảng trắng
+      }
+      start--;
     }
-    return afterAt ? afterAtInput?.trim() : afterAt[0]?.trim();
+
+    // Cửa sổ cần xét là từ 'start' đến 'caretPos'
+    const windowText = fullText.slice(start, caretPos);
+
+    // Tìm ký tự '@' gần caret nhất trong cửa sổ này
+    const atInWindow = windowText.lastIndexOf('@');
+    if (atInWindow === -1) return '';
+
+    // Cụm mention ứng viên (từ '@' đến caret)
+    const candidate = windowText.slice(atInWindow, windowText.length);
+
+    // Ràng buộc an toàn: không chứa xuống dòng, không quá 4 khoảng trắng
+    if (candidate.includes('\n')) return '';
+    const spaceCount = (candidate.match(/ /g) || []).length;
+    if (spaceCount > 4) return '';
+
+    return candidate.trim();
   }
 
   async onDownloadFile(item: any) {
@@ -4255,7 +4319,6 @@ export class GuestChatComponent
       //   .then(blob => {
       //     saveAs(blob, item.fileName);
       //   })\
-      console.log(item.urls[0], item.fileName);
       (window as any).flutter_inappwebview.callHandler('downloadFile', item.urls[0], item.fileName);
     } else {
       // const a = document.createElement('a');

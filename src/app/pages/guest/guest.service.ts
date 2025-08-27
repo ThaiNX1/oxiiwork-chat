@@ -80,6 +80,20 @@ export class GuestService {
     }
   }
 
+  async chatConversationGetMemberDetail(conversationId: string, receiverId: string = ''): Promise<OfficeChatConversation | null | undefined> {
+    try {
+      const response = lastValueFrom(this.apollo.query<Query>({
+        query: GQL_QUERIES.guestChat.chatConversationGetMemberDetail,
+        variables: {conversationId, receiverId},
+        fetchPolicy: "no-cache"
+      })
+        .pipe(map(res => res.data?.chatConversationDetail)))
+      return response
+    } catch (err) {
+      return null
+    }
+  }
+
   async chatMessageList(filters: any): Promise<ChatMessageListResponse | null | undefined> {
     try {
       const response = lastValueFrom(this.apollo.query<Query>({

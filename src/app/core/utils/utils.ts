@@ -156,10 +156,8 @@ export function insertSpaceEscapingElementAtCaret(spaceChar: string = '\u00A0') 
 export function removeEmptySpan(members: [any]) {
   const spans2 = Array.from(document.querySelector('[contenteditable]')?.querySelectorAll('span') || []);
   const sel = window.getSelection();
-  console.log('sel', sel);
 
   const focusNode = sel?.focusNode;
-  console.log('focusNode', focusNode);
   const focusEl =
     focusNode instanceof HTMLElement
       ? focusNode
@@ -186,6 +184,37 @@ export function removeEmptySpan(members: [any]) {
       sp.remove();
     }
   }
+}
+
+export function unwrapFontTags(rootEl: HTMLElement) {
+  const fonts = Array.from(rootEl.querySelectorAll('font'));
+  for (const f of fonts) {
+    const frag = document.createDocumentFragment();
+    while (f.firstChild) frag.appendChild(f.firstChild);
+    f.replaceWith(frag);
+  }
+  rootEl.normalize();
+  moveCaretToEnd(rootEl);
+}
+
+export function moveCaretToEnd(rootEl: HTMLElement) {
+  if (!rootEl) return;
+
+  // Nếu rỗng, thêm 1 text node để caret có chỗ đứng
+  if (!rootEl.firstChild) {
+    rootEl.appendChild(document.createTextNode(''));
+  }
+
+  const sel = window.getSelection();
+  const range = document.createRange();
+
+  // Cách an toàn: chọn toàn bộ nội dung rồi collapse về cuối
+  range.selectNodeContents(rootEl);
+  range.collapse(false);
+
+  sel?.removeAllRanges();
+  sel?.addRange(range);
+  rootEl.focus();
 }
 
 export function getCaretSpanInfo() {
@@ -221,4 +250,73 @@ export function getCaretSpanInfo() {
     inSpan: true,
     atEnd
   };
+}
+
+export function logCaretPosition(rootEl: HTMLElement | null) {
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount || !sel.isCollapsed) return null;
+
+  const range = sel.getRangeAt(0);
+  let container: Node = range.startContainer;
+  let offset: number = range.startOffset;
+
+  // Chuẩn hoá: luôn đưa về TEXT_NODE + offset ký tự
+  ({ container, offset } = normalizeToTextNode(container, offset));
+
+  if (container.nodeType !== Node.TEXT_NODE) return null;
+
+  const textNode = container as Text;
+  const text = textNode.data;
+
+  // Vị trí tuyệt đối trong toàn editor (không dựa innerText để tránh coalescing)
+  const absPos = getAbsoluteCaretPos(rootEl, textNode, offset);
+
+  return {
+    span: textNode.parentElement?.closest('span') || null,
+    textNode,
+    offset,        // offset ký tự trong text node hiện tại (đÃ đúng sau Arrow)
+    absPos,        // vị trí tuyệt đối trong toàn editor
+    char: text[offset] ?? '' // ký tự tại caret (nếu có)
+  };
+}
+function normalizeToTextNode(container: Node, offset: number) {
+  if (container.nodeType === Node.TEXT_NODE) {
+    return { container, offset };
+  }
+  // container là ELEMENT_NODE
+  const el = container as Element;
+
+  // Case A: caret đứng "trước" child ở index=offset -> đi vào first text của child đó
+  if (offset < el.childNodes.length) {
+    let node: Node | null = el.childNodes[offset];
+    while (node && node.nodeType === Node.ELEMENT_NODE && node.childNodes.length) {
+      node = node.firstChild;
+    }
+    if (node && node.nodeType === Node.TEXT_NODE) {
+      return { container: node, offset: 0 };
+    }
+  }
+
+  // Case B: caret đứng "sau" child cuối (offset == childCount) -> lấy last text của child trước
+  let idx = Math.min(offset, el.childNodes.length) - 1;
+  while (idx >= 0) {
+    let node: Node | null = el.childNodes[idx];
+    while (node && node.nodeType === Node.ELEMENT_NODE && node.childNodes.length) {
+      node = node.lastChild;
+    }
+    if (node && node.nodeType === Node.TEXT_NODE) {
+      return { container: node, offset: (node as Text).data.length };
+    }
+    idx--;
+  }
+
+  // Fallback hiếm gặp
+  return { container, offset: 0 };
+}
+
+function getAbsoluteCaretPos(rootEl: HTMLElement | null, container: Node, offset: number) {
+  const r = document.createRange();
+  r.selectNodeContents(rootEl || document.body);
+  r.setEnd(container, offset);
+  return r.toString().length;
 }

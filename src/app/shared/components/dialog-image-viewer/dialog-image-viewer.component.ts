@@ -1,33 +1,38 @@
-import { Component, ElementRef, HostListener, Inject, ViewChild } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
-import { MaterialModule } from "../../../core/material.module";
-import { DialogImageViewerType } from "../../../core/constants/enum";
-import { saveAs } from "file-saver";
-import * as _ from "lodash";
+import {
+  Component,
+  ElementRef,
+  HostListener,
+  Inject,
+  ViewChild,
+} from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MaterialModule } from '../../../core/material.module';
+import { DialogImageViewerType } from '../../../core/constants/enum';
+import { saveAs } from 'file-saver';
+import * as _ from 'lodash';
+import { CommonService } from '../../../core/services/common.service';
 
 @Component({
   selector: 'app-dialog-image-viewer',
   standalone: true,
-  imports: [
-    MaterialModule,
-  ],
+  imports: [MaterialModule],
   templateUrl: './dialog-image-viewer.component.html',
-  styleUrl: './dialog-image-viewer.component.scss'
+  styleUrl: './dialog-image-viewer.component.scss',
 })
 export class DialogImageViewerComponent {
-  DialogImageViewerType = DialogImageViewerType
-  imageSelectedIndex = 0
+  DialogImageViewerType = DialogImageViewerType;
+  imageSelectedIndex = 0;
 
   constructor(
     public dialogRef: MatDialogRef<DialogImageViewerComponent>,
     @Inject(MAT_DIALOG_DATA) public data: DialogImageViewerData,
-  ) {
-  }
+    private commonService: CommonService
+  ) {}
 
   /** Image */
-  currentRotate = 0
-  currentScale = 0.8
-  styleScale = 'scale(0.8)'
+  currentRotate = 0;
+  currentScale = 0.8;
+  styleScale = 'scale(0.8)';
 
   // Pan state
   tx = 0;
@@ -58,19 +63,19 @@ export class DialogImageViewerComponent {
   }
 
   onCloseDialog() {
-    this.dialogRef?.close()
+    this.dialogRef?.close();
   }
 
   /** Image */
   reset() {
-    this.currentScale = 0.5
-    this.currentRotate = 0
-    this.styleScale = `scale(${this.currentScale}); rotate(${this.currentRotate}deg)`
+    this.currentScale = 0.5;
+    this.currentRotate = 0;
+    this.styleScale = `scale(${this.currentScale}); rotate(${this.currentRotate}deg)`;
   }
 
   zoomOut() {
-    this.currentScale -= 0.2
-    this.styleScale = `scale(${Math.max(this.currentScale, 0.3)})`
+    this.currentScale -= 0.2;
+    this.styleScale = `scale(${Math.max(this.currentScale, 0.3)})`;
     if (this.currentScale <= 0.5) {
       // chốt về 1 và căn giữa
       this.currentScale = 0.5;
@@ -79,26 +84,38 @@ export class DialogImageViewerComponent {
   }
 
   zoomIn() {
-    this.currentScale += 0.2
-    this.styleScale = `scale(${Math.min(this.currentScale, 3)})`
+    this.currentScale += 0.2;
+    this.styleScale = `scale(${Math.min(this.currentScale, 3)})`;
   }
 
   rotateImage(degree: number) {
-    this.currentRotate += degree
-    this.styleScale = `rotate(${this.currentRotate}deg)`
+    this.currentRotate += degree;
+    this.styleScale = `rotate(${this.currentRotate}deg)`;
   }
 
   openInNewTab() {
-    window.open(this.data?.urls?.[this.imageSelectedIndex], '_blank')
+    if (this.commonService.smallScreen()) {
+      (window as any).flutter_inappwebview.callHandler(
+        'openExternalLink',
+        this.data?.urls?.[this.imageSelectedIndex]
+      );
+      this.dialogRef?.close();
+    } else {
+      window.open(this.data?.urls?.[this.imageSelectedIndex], '_blank');
+    }
   }
 
   download() {
-    fetch(this.data?.urls?.[this.imageSelectedIndex]).then((res) => {
-      res.blob().then((blob) => {
-        saveAs(blob, _.last(this.data?.urls?.[this.imageSelectedIndex].split('/')))
+    fetch(this.data?.urls?.[this.imageSelectedIndex])
+      .then(res => {
+        res.blob().then(blob => {
+          saveAs(
+            blob,
+            _.last(this.data?.urls?.[this.imageSelectedIndex].split('/'))
+          );
+        });
       })
-    }).catch((err) => {
-    })
+      .catch(err => {});
   }
   /** Drag – Mouse */
   onMouseDown(e: MouseEvent) {
@@ -120,8 +137,12 @@ export class DialogImageViewerComponent {
     this.lastY = e.clientY;
   }
 
-  onMouseUp() { this.dragging = false; }
-  onMouseLeave() { this.dragging = false; }
+  onMouseUp() {
+    this.dragging = false;
+  }
+  onMouseLeave() {
+    this.dragging = false;
+  }
 
   /** Drag – Touch */
   onTouchStart(ev: TouchEvent) {
@@ -143,10 +164,14 @@ export class DialogImageViewerComponent {
     this.lastY = ev.touches[0].clientY;
   }
 
-  onTouchEnd() { this.dragging = false; }
+  onTouchEnd() {
+    this.dragging = false;
+  }
 
   /** Ngăn drag ảnh mặc định của browser */
-  onNativeDragStart(e: DragEvent) { e.preventDefault(); }
+  onNativeDragStart(e: DragEvent) {
+    e.preventDefault();
+  }
 
   /** --------- Căn giữa khi không zoom --------- */
   private centerIfNotZoomed() {
@@ -166,8 +191,9 @@ export class DialogImageViewerComponent {
     const h = naturalH * this.currentScale;
 
     // Tính hộp bao sau rotate (deg -> rad)
-    const rad = ((this.currentRotate % 360) + 360) % 360 * Math.PI / 180;
-    const cos = Math.cos(rad), sin = Math.sin(rad);
+    const rad = ((((this.currentRotate % 360) + 360) % 360) * Math.PI) / 180;
+    const cos = Math.cos(rad),
+      sin = Math.sin(rad);
     const boxW = Math.abs(w * cos) + Math.abs(h * sin);
     const boxH = Math.abs(w * sin) + Math.abs(h * cos);
 
@@ -178,6 +204,6 @@ export class DialogImageViewerComponent {
 }
 
 export type DialogImageViewerData = {
-  type: DialogImageViewerType
-  urls: string[]
-}
+  type: DialogImageViewerType;
+  urls: string[];
+};

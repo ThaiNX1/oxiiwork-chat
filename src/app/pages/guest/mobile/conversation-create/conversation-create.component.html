@@ -1,13 +1,5 @@
 <div class="w-full h-full flex flex-column align-items-stretch justify-content-start overflow-auto">
   @if (routerParameterType() === ChatConversationType.Direct) {
-    <!-- <a class="flex align-items-center justify-content-start border-bottom-1 border-gray-400 p-2 gap-3 no-underline"
-       [routerLink]="['chat/mobile/create-conversation']"
-       [queryParams]="{type: ChatConversationType.Group}">
-      <div class="w-3rem h-3rem border-circle flex align-items-center justify-content-center bg-blue-300">
-        <mat-icon class="text-2xl text-white">groups</mat-icon>
-      </div>
-      <span class="font-semibold">Tạo nhóm chat</span>
-    </a> -->
     <div
     class="h-full flex-1-custom overflow-auto flex flex-column align-items-stretch justify-content-start overflow-auto">
     @if (!filterForm.value['keyword']?.length) {
@@ -42,41 +34,48 @@
       [formGroup]="newGroupConversationForm"
       (ngSubmit)="onSearchUser(ChatConversationType.Group)"
       class="flex flex-column align-items-stretch justify-content-start gap-3">
-        <div class="flex align-items-center justify-content-start gap-3 mt-3">
-          <div
-            class="flex align-items-center justify-content-center bg-gray-02 w-3rem h-3rem border-circle cursor-pointer"
-            (click)="groupAvatar.click()">
-            @if (newGroupConversationForm.value['avatarUrl']) {
-              <img
-                class="w-3rem h-3rem border-circle object-cover"
-                [src]="newGroupConversationForm.value['avatarUrl']" />
-            } @else {
-              <img src="assets/images/ic_camera.svg" alt="camera" />
-            }
-          </div>
-          <mat-form-field
-            floatLabel="auto"
-            appearance="outline"
-            class="flex-1 bg-white">
+        @switch (newConversationInfo()?.action) {
+          @case (ConversationActionType.ADD_MEMBER) {
+            <!-- body -->
+          }
+          @default {
+            <div class="flex align-items-center justify-content-start gap-3 mt-3">
+              <div
+                class="flex align-items-center justify-content-center bg-gray-02 w-3rem h-3rem border-circle cursor-pointer"
+                (click)="groupAvatar.click()">
+                @if (newGroupConversationForm.value['avatarUrl']) {
+                  <img
+                    class="w-3rem h-3rem border-circle object-cover"
+                    [src]="newGroupConversationForm.value['avatarUrl']" />
+                } @else {
+                  <img src="assets/images/ic_camera.svg" alt="camera" />
+                }
+              </div>
+              <mat-form-field
+                floatLabel="auto"
+                appearance="outline"
+                class="flex-1 bg-white">
+                <input
+                  matInput
+                  placeholder="Nhập tên của nhóm"
+                  formControlName="name" />
+              </mat-form-field>
+            </div>
+            <mat-divider class="m-0"></mat-divider>
             <input
-              matInput
-              placeholder="Nhập tên của nhóm"
-              formControlName="name" />
-          </mat-form-field>
-        </div>
-        <mat-divider class="m-0"></mat-divider>
+              #groupAvatar
+              type="file"
+              formControlName="file"
+              class="hidden"
+              accept="image/*"
+              (change)="onUploadAvatar($event)" />
+            <button type="submit" class="hidden"></button>
+          }
+        }
         <mat-form-field floatLabel="auto" appearance="outline" class="w-full bg-white">
           <input matInput placeholder="Tìm kiếm..." formControlName="keyword" />
           <img matPrefix src="assets/images/guest/ic_search.svg" class="mx-2" />
         </mat-form-field>
-        <input
-          #groupAvatar
-          type="file"
-          formControlName="file"
-          class="hidden"
-          accept="image/*"
-          (change)="onUploadAvatar($event)" />
-        <button type="submit" class="hidden"></button>
       </form>
       <div
         class="flex-1 flex align-items-stretch justify-content-start overflow-auto">

@@ -1413,8 +1413,8 @@
                                                     : 'text-white'
                                                 "
                                                 [innerHTML]="
-                                                  item?.hasMention ||
-                                                  item?.hasLink
+                                                  (item?.hasMention ||
+                                                  item?.hasLink)
                                                     ? item.innerHTML
                                                     : item.message
                                                 "></p>
@@ -2541,6 +2541,7 @@
 <mat-autocomplete
   #auto="matAutocomplete"
   class="border-round"
+  [autoActiveFirstOption]="true"
   (optionSelected)="onSelectMention($event)">
   @if (mentionMembers()?.length) {
     @for (member of mentionMembers(); track member.user.id; let i = $index) {
@@ -2627,19 +2628,14 @@
             <!-- <mat-icon matPrefix class="text-3xl text-gray-500">search</mat-icon> -->
           </mat-form-field>
           <div
-            class="flex justify-content-start gap-2"
-            [ngClass]="
-              commonService.smallScreen()
-                ? 'flex-column align-items-stretch'
-                : 'flex-row align-items-center'
-            ">
+            class="flex justify-content-start flex-column align-items-stretch gap-2">
             <mat-form-field
               floatLabel="auto"
               appearance="outline"
               class="flex-1 bg-white">
               <mat-select
                 formControlName="senderId"
-                placeholder="{{ 'CHAT_COMPONENT.SENDER' | translate }}"
+                placeholder="{{ 'CHAT_COMPONENT.SENDER' | translate }}" multiple
                 (selectionChange)="onSearchMessage(messageSearchTabSelected())">
                 @for (member of conversationSelected().members; track $index) {
                   <mat-option [value]="member.user.id">
@@ -2668,7 +2664,8 @@
             </mat-form-field>
             <button
               type="button"
-              class="flex-1 bg-white flex align-items-center justify-content-between p-2"
+              class="flex-1 bg-white flex align-items-center justify-content-between"
+              style="padding: 0.6rem 1rem !important"
               cdkOverlayOrigin
               #sentAtTemplate="cdkOverlayOrigin"
               (click)="searchByDate.set(true)">
@@ -2873,11 +2870,17 @@
         <form
           [formGroup]="conversationSelectedFilterForm"
           class="w-21rem flex flex-column align-items-stretch justify-content-start gap-3 border-round mt-2 bg-white p-3">
-          <p
-            class="cursor-pointer hover:text-blue-300"
-            (click)="onSearchMessage(messageSearchTabSelected(), -7)">
-            7 {{ 'CHAT_COMPONENT.DAY_AGO' | translate }}
-          </p>
+          <div class="flex align-items-end justify-content-between">
+            <p
+              class="cursor-pointer hover:text-blue-300"
+              (click)="onSearchMessage(messageSearchTabSelected(), -7)">
+              7 {{ 'CHAT_COMPONENT.DAY_AGO' | translate }}
+            </p>
+            <button class="min-h-0 h-auto !important bg-transparent border-none flex align-items-center justify-content-center"
+              (click)="searchByDate.set(false)">
+              <mat-icon class="text-2xl">close</mat-icon>
+            </button>
+          </div>
           <p
             class="cursor-pointer hover:text-blue-300"
             (click)="onSearchMessage(messageSearchTabSelected(), -30)">
@@ -3134,15 +3137,16 @@
         </div>
       </div>
       <div class="flex align-items-center justify-content-end pr-2">
+        <a mat-menu-item class="flex align-items-center justify-content-start gap-2"
+          [routerLink]="['/guest/chat/mobile/create-conversation']" 
+          [queryParams]="{type: ChatConversationType.Group, action: ConversationActionType.ADD_MEMBER, conversationId: conversationSelected()?.id}">
+          <img src="assets/images/guest/ic_user_add.svg" />
+        </a>
         <button
           class="bg-transparent border-none flex align-items-center justify-content-center"
           (click)="onSearchInConversation()">
           <mat-icon class="text-gray-500 text-2xl">search</mat-icon>
         </button>
-        <!-- <button class="bg-transparent border-none flex align-items-center justify-content-center"
-                [matMenuTriggerFor]="mobileExtraActionConversation">
-          <mat-icon class="text-gray-500 text-2xl">more_vert</mat-icon>
-        </button> -->
       </div>
     }
   </div>
@@ -3167,7 +3171,8 @@
       }}</span>
     </a>
     <a mat-menu-item class="flex align-items-center justify-content-start gap-2"
-      [routerLink]="['/guest/chat/mobile/create-conversation']" [queryParams]="{type: ChatConversationType.Group}">
+      [routerLink]="['/guest/chat/mobile/create-conversation']" 
+      [queryParams]="{type: ChatConversationType.Group}">
       <span class="text-color">{{'CHAT_COMPONENT.NEW_GROUP' | translate}}</span>
     </a>
   </ng-template>

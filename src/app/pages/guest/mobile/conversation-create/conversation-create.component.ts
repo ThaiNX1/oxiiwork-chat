@@ -1,21 +1,27 @@
-import { Component, EventEmitter, inject, Injector, Output, signal } from '@angular/core';
-import { BaseGuestClass } from '../../../../commons/base-guest.class';
-import { GuestService } from '../../guest.service';
+import { Component, inject, Injector, signal } from '@angular/core';
 import { FormArray, FormControl, FormGroup, Validators } from '@angular/forms';
-import { debounceTime } from 'rxjs/operators';
-import { ChatConversationGroupType, ChatConversationType } from '../../../../commons/types';
 import { ActivatedRoute, Router } from '@angular/router';
-import { UploadFileService } from '../../../../core/services/upload-file.service';
 import { Store } from '@ngxs/store';
+import * as _ from 'lodash';
+import { debounceTime } from 'rxjs/operators';
+import { BaseGuestClass } from '../../../../commons/base-guest.class';
+import {
+  ChatConversationGroupType,
+  ChatConversationType,
+  ConversationActionType,
+} from '../../../../commons/types';
+import { UploadFileService } from '../../../../core/services/upload-file.service';
 import { Push } from '../../guest-chat/state/conversation.state';
+import { GuestService } from '../../guest.service';
 
 @Component({
   selector: 'app-conversation-create',
   templateUrl: './conversation-create.component.html',
-  styleUrl: './conversation-create.component.scss'
+  styleUrl: './conversation-create.component.scss',
 })
 export class ConversationCreateComponent extends BaseGuestClass {
   protected readonly ChatConversationType = ChatConversationType;
+  protected readonly ConversationActionType = ConversationActionType;
   protected searchUsers = signal<any[]>([]);
   protected showFilterForm = signal(false);
   protected routerParameterType = signal<string | null>(null);
@@ -37,7 +43,7 @@ export class ConversationCreateComponent extends BaseGuestClass {
 
   ngOnInit(): void {
     this.filterForm = new FormGroup({
-      keyword: new FormControl(null)
+      keyword: new FormControl(null),
     });
     this.onBaseInit();
     this.onValueChange();
@@ -65,13 +71,20 @@ export class ConversationCreateComponent extends BaseGuestClass {
         case ChatConversationType.Direct:
           this.newConversationInfo.set({
             name: 'Trò truyện mới',
-            type: param?.type
+            type: param?.type,
+            action: param?.action,
+            conversationId: param?.conversationId,
           });
           break;
         case ChatConversationType.Group:
           this.newConversationInfo.set({
-            name: 'Tạo nhóm chat',
-            type: param?.type
+            name:
+              param?.action === ConversationActionType.ADD_MEMBER
+                ? 'Thêm thành viên'
+                : 'Tạo nhóm chat',
+            type: param?.type,
+            action: param?.action,
+            conversationId: param?.conversationId,
           });
           break;
       }
@@ -79,22 +92,24 @@ export class ConversationCreateComponent extends BaseGuestClass {
   }
 
   private onValueChange(): void {
-    this.filterForm.controls['keyword'].valueChanges.pipe(debounceTime(300)).subscribe(async (value) => {
-      if (value) {
-        // await this.onSearchUser(ChatConversationType.Direct)
-        const response = await this.guestService.conversationGetUserList({
-          keyword: value,
-          page: 0,
-          size: 20
-        });
-        this.searchUsers.set(response?.officeUsers || []);
-      } else {
-        this.searchUsers.set([]);
-      }
-    });
+    this.filterForm.controls['keyword'].valueChanges
+      .pipe(debounceTime(300))
+      .subscribe(async value => {
+        if (value) {
+          // await this.onSearchUser(ChatConversationType.Direct)
+          const response = await this.guestService.conversationGetUserList({
+            keyword: value,
+            page: 0,
+            size: 20,
+          });
+          this.searchUsers.set(response?.officeUsers || []);
+        } else {
+          this.searchUsers.set([]);
+        }
+      });
     this.newGroupConversationForm.controls['keyword'].valueChanges
       .pipe(debounceTime(300))
-      .subscribe(async (value) => {
+      .subscribe(async value => {
         if (value) {
           await this.onSearchUser(ChatConversationType.Group);
         }
@@ -112,9 +127,8 @@ export class ConversationCreateComponent extends BaseGuestClass {
       onlyActive: true,
     };
     const memberGroupIds =
-      this.groupConversationMemberArray
-        ?.getRawValue()
-        ?.map((item) => item.id) || [];
+      this.groupConversationMemberArray?.getRawValue()?.map(item => item.id) ||
+      [];
     const response =
       await this.guestService.conversationGetUserFullOrgChartList(filter);
     const _officeUsers =
@@ -133,14 +147,14 @@ export class ConversationCreateComponent extends BaseGuestClass {
       case ChatConversationType.Direct:
         void this.router.navigate(['/guest/chat'], {
           queryParams: {
-            receiverId: user.id
-          }
+            receiverId: user.id,
+          },
         });
         break;
       case ChatConversationType.Group:
         const checkUserExist = this.groupConversationMemberArray
           .getRawValue()
-          ?.find((it) => it.id === user.id);
+          ?.find(it => it.id === user.id);
         if (checkUserExist) return;
         this.groupConversationMemberArray.push(
           new FormGroup({
@@ -157,7 +171,7 @@ export class ConversationCreateComponent extends BaseGuestClass {
   onUploadAvatar(event: any) {
     const file = event.target.files[0];
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = e => {
       this.newGroupConversationForm.patchValue({
         avatarUrl: e.target?.result,
         fileUpload: event.target.files[0],
@@ -171,41 +185,60 @@ export class ConversationCreateComponent extends BaseGuestClass {
   }
 
   async onCreateGroupConversation() {
-    this.newGroupConversationForm.markAllAsTouched();
-    if (this.newGroupConversationForm.invalid) return;
-    console.log('onCreateGroupConversation', this.newGroupConversationForm);
     let args: any = {
       name: this.newGroupConversationForm.value.name,
       groupType: ChatConversationGroupType.Public,
       memberIds: [
-        ...this.groupConversationMemberArray
-          .getRawValue()
-          ?.map((it) => it.id),
+        ...this.groupConversationMemberArray.getRawValue()?.map(it => it.id),
         // this.user.id
       ],
     };
-    if (this.newGroupConversationForm.value.fileUpload) {
-      const uploadLinkResponse =
-        await this.injector.get(UploadFileService).storageGeneratePresignedUrls({
-          files: [
-            {
-              fileName:
-                this.newGroupConversationForm.value.fileUpload.name,
-              fileType:
-                this.newGroupConversationForm.value.fileUpload.type,
-            },
-          ],
-        });
-      if (uploadLinkResponse) {
+    let messageResult = '';
+    let response: any;
+    switch (this.newConversationInfo()?.action) {
+      case ConversationActionType.ADD_MEMBER:
+        messageResult = 'Thêm thành viên thành công';
+        const conversation =
+          await this.guestService.chatConversationGetMemberDetail(
+            this.newConversationInfo()?.conversationId
+          );
+        const currentMemberIds = conversation?.members?.map(it => it.id) || [];
         args = {
           ...args,
-          imgUrl: uploadLinkResponse.data?.[0]?.url,
+          memberIds: _.uniq([
+            ...currentMemberIds,
+            ...args.memberIds,
+          ]),
         };
-      }
+        response = await this.guestService.conversationGroupEdit(args);
+        break;
+      default:
+        messageResult = 'Tạo nhóm thành công';
+        this.newGroupConversationForm.markAllAsTouched();
+        if (this.newGroupConversationForm.invalid) return;
+        if (this.newGroupConversationForm.value.fileUpload) {
+          const uploadLinkResponse = await this.injector
+            .get(UploadFileService)
+            .storageGeneratePresignedUrls({
+              files: [
+                {
+                  fileName: this.newGroupConversationForm.value.fileUpload.name,
+                  fileType: this.newGroupConversationForm.value.fileUpload.type,
+                },
+              ],
+            });
+          if (uploadLinkResponse) {
+            args = {
+              ...args,
+              imgUrl: uploadLinkResponse.data?.[0]?.url,
+            };
+          }
+        }
+        response = await this.guestService.conversationGroupAdd(args);
+        break;
     }
-    const response = await this.guestService.conversationGroupAdd(args);
     if (response) {
-      this.commonService.openSnackBar('Tạo nhóm thành công');
+      this.commonService.openSnackBar(messageResult);
       let _conversation: any = {
         ...response,
         tempId: null,
