@@ -16,6 +16,8 @@ import {NgxPrintModule} from "ngx-print";
 import {TranslateModule} from "@ngx-translate/core";
 import { ConversationItemComponent } from "./guest-chat/conversation-item/conversation-item.component";
 import { ConversationDetailComponent } from "./guest-chat/conversation-detail/conversation-detail.component";
+import { MentionDirective } from "./guest-chat/mention/mention.directive";
+import { ContenteditableModelDirective } from "../../shared/directives/contenteditable-model.directive";
 
 @NgModule({
   declarations: [
@@ -38,7 +40,9 @@ import { ConversationDetailComponent } from "./guest-chat/conversation-detail/co
         InfiniteScrollDirective,
         HammerModule,
         NgxPrintModule,
-        TranslateModule
+        TranslateModule,
+        MentionDirective,
+        ContenteditableModelDirective
     ],
 })
 export class GuestModule {

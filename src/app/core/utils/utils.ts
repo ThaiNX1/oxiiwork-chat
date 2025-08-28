@@ -320,3 +320,35 @@ function getAbsoluteCaretPos(rootEl: HTMLElement | null, container: Node, offset
   r.setEnd(container, offset);
   return r.toString().length;
 }
+
+export function extractMentionSpans(html: string) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  return Array.from(doc.body.querySelectorAll('span.mention')).map(sp => ({
+    id: (sp as HTMLElement).dataset['id'] ?? null,
+    fullname: (sp as HTMLElement).dataset['fullname'] ?? null,
+    text: sp.textContent ?? '',
+    outerHTML: (sp as HTMLElement).outerHTML,
+  }));
+}
+
+export function replaceMentionSpansWithTokens(html: string): string {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+
+  // Thay span có data-id bằng [@id], còn span không có data-id thì unwrap
+  doc.body.querySelectorAll('span').forEach((sp) => {
+    const el = sp as HTMLElement;
+    const id = el.dataset['id'];
+
+    if (id && id.trim().length > 0) {
+      sp.replaceWith(doc.createTextNode(`[@${id}]`));
+    } else {
+      const frag = document.createDocumentFragment();
+      while (sp.firstChild) frag.appendChild(sp.firstChild);
+      sp.replaceWith(frag);
+    }
+  });
+
+  // Trả về HTML (giữ <br>, &nbsp; nếu có). Nếu cần plain text thì dùng textContent.
+  // return doc.body.innerHTML;
+  return (doc.body.textContent ?? '').replace(/\u00A0/g, ' ');
+}

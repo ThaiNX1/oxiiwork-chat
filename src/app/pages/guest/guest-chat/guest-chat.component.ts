@@ -15,6 +15,7 @@ import {
   Injector,
   OnDestroy,
   OnInit,
+  SecurityContext,
   signal,
   TemplateRef,
   ViewChild,
@@ -36,8 +37,8 @@ import {
   startOfDay,
 } from 'date-fns';
 import * as _ from 'lodash';
-import { BehaviorSubject, forkJoin, Subject } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
+import { BehaviorSubject, forkJoin, Observable, of, Subject } from 'rxjs';
+import { debounceTime, delay } from 'rxjs/operators';
 import * as uuid from 'uuid';
 import { BaseGuestClass } from '../../../commons/base-guest.class';
 import {
@@ -56,11 +57,13 @@ import { UploadFileService } from '../../../core/services/upload-file.service';
 import { WebsocketService } from '../../../core/services/Websocket.service';
 import {
   endCodeUriFileDownLoad,
+  extractMentionSpans,
   getCaretSpanInfo,
   insertSpaceEscapingElementAtCaret,
   logCaretPosition,
   removeEmptySpan,
   removeVietnameseTones,
+  replaceMentionSpansWithTokens,
   string2date,
   unwrapFontTags,
   urlModify,
@@ -70,6 +73,7 @@ import { GuestService } from '../guest.service';
 import { Store } from '@ngxs/store';
 import { ConversationState, Reset } from './state/conversation.state';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { MentionUser } from './mention/mention.types';
 
 @Component({
   selector: 'app-guest-chat',
@@ -1255,6 +1259,7 @@ export class GuestChatComponent
             ..._newMessage,
             message: _newMessage.message.replace(/\r?\n/g, '<br>'),
             hasLink: urlVerify(data.message?.message),
+            urlHTML: urlModify(data.message?.message, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>'),
             innerHTML: this.sanitizer.bypassSecurityTrustHtml(
               urlModify(data.message?.message, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
             ),
@@ -1279,6 +1284,7 @@ export class GuestChatComponent
           _newMessage = {
             ..._newMessage,
             hasMention: true,
+            mentionHTML: urlModify(_messageMention, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>'),
             innerHTML: this.sanitizer.bypassSecurityTrustHtml(
               urlModify(_messageMention, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
             ),
@@ -1647,6 +1653,7 @@ export class GuestChatComponent
             _messages[_messageIndex] = {
               ..._messages[_messageIndex],
               hasLink: urlVerify(data.message?.message),
+              urlHTML: urlModify(data.message?.message, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>'),
               innerHTML: this.sanitizer.bypassSecurityTrustHtml(
                 urlModify(data.message?.message, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
               ),
@@ -1671,6 +1678,7 @@ export class GuestChatComponent
             _messages[_messageIndex] = {
               ..._messages[_messageIndex],
               hasMention: true,
+              mentionHTML: urlModify(_messageMention, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>'),
               innerHTML: this.sanitizer.bypassSecurityTrustHtml(
                 urlModify(_messageMention, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
               ),
@@ -1795,6 +1803,9 @@ export class GuestChatComponent
             _newMessage = {
               ..._newMessage,
               hasLink: urlVerify(_newMessage.message),
+              urlHTML: urlVerify(_newMessage.message)
+                ? urlModify(_newMessage.message, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
+                : '',
               innerHTML: urlVerify(_newMessage.message)
                 ? this.sanitizer.bypassSecurityTrustHtml(
                   urlModify(_newMessage.message, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
@@ -1834,6 +1845,7 @@ export class GuestChatComponent
             _newMessage = {
               ..._newMessage,
               hasMention: true,
+              mentionHTML: urlModify(_messageMention, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>'),
               innerHTML: this.sanitizer.bypassSecurityTrustHtml(
                 urlModify(_messageMention, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
               ),
@@ -2053,6 +2065,7 @@ export class GuestChatComponent
           message: _locationMessage,
           type: ChatMessageType.LOCATION,
           hasLink: true,
+          urlHTML: urlModify(_locationMessage, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>'),
           innerHTML: this.sanitizer.bypassSecurityTrustHtml(
             urlModify(_locationMessage, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
           ),
@@ -2094,6 +2107,7 @@ export class GuestChatComponent
               message: _message?.replace(/\u0000/g, ' ')?.replace('\u00A0', ' '),
               hasMention: hasMention,
               hasLink: urlVerify(_message),
+              urlHTML: urlModify(_message, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>'),
               innerHTML: this.sanitizer.bypassSecurityTrustHtml(
                 urlModify(_message, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
               ),
@@ -2143,6 +2157,8 @@ export class GuestChatComponent
         fileName: args?.fileName,
         hasMention: args?.hasMention,
         hasLink: args?.hasLink,
+        urlHTML: args?.urlHTML,
+        mentionHTML: args?.mentionHTML,
         innerHTML: args?.innerHTML,
         firstMessage: false,
         sending: true,
@@ -2167,6 +2183,7 @@ export class GuestChatComponent
         ).replace(/\r?\n/g, '<br>');
         _newMessage = {
           ..._newMessage,
+          mentionHTML: urlModify(_messageMention, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>'),
           innerHTML: this.sanitizer.bypassSecurityTrustHtml(
             urlModify(_messageMention, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
           ),
@@ -2279,6 +2296,8 @@ export class GuestChatComponent
           delete args.hasMention;
           delete args.hasLink;
           delete args.innerHTML;
+          delete args.mentionHTML;
+          delete args.urlHTML;
           // }
           break;
         case ChatMessageType.DOC:
@@ -2473,6 +2492,7 @@ export class GuestChatComponent
           message: _locationMessage,
           type: ChatMessageType.LOCATION,
           hasLink: true,
+          urlHTML: urlModify(_locationMessage, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>'),
           innerHTML: this.sanitizer.bypassSecurityTrustHtml(
             urlModify(_locationMessage, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
           ),
@@ -2524,6 +2544,7 @@ export class GuestChatComponent
               message: _message?.replace(/\u0000/g, ' ')?.replace('\u00A0', ' ').replace(/\r?\n/g, '<br>'),
               hasMention: hasMention,
               hasLink: urlVerify(_message),
+              urlHTML: urlModify(_message, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>'),
               innerHTML: this.sanitizer.bypassSecurityTrustHtml(
                 urlModify(_message, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
               ),
@@ -2574,6 +2595,8 @@ export class GuestChatComponent
         fileName: args?.fileName,
         hasMention: args?.hasMention,
         hasLink: args?.hasLink,
+        urlHTML: args?.urlHTML,
+        mentionHTML: args?.mentionHTML,
         innerHTML: args?.innerHTML,
         firstMessage: false,
         sending: true,
@@ -2599,6 +2622,7 @@ export class GuestChatComponent
         ).replace(/\r?\n/g, '<br>');
         _newMessage = {
           ..._newMessage,
+          mentionHTML: urlModify(_messageMention, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>'),
           innerHTML: this.sanitizer.bypassSecurityTrustHtml(
             urlModify(_messageMention, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
           ),
@@ -2711,6 +2735,8 @@ export class GuestChatComponent
           delete args.hasMention;
           delete args.hasLink;
           delete args.innerHTML;
+          delete args.mentionHTML;
+          delete args.urlHTML;
           // }
           break;
         case ChatMessageType.DOC:
@@ -2932,9 +2958,12 @@ export class GuestChatComponent
   }
 
   // Mention cho web và mentiontoken trên mobile
-  onMentionMember(event: any, element: any = null): boolean {
+  onMentionMember(event: any, element: any = null, isEdit: boolean = false): boolean {
+    const editElement = isEdit
+    ? document.getElementById(`${this.editMessageSelected().id}_editMessage`)
+    : document.querySelector('[contenteditable]') as HTMLElement;
     if (event?.key === '@' || (typeof event === 'string' && event?.includes('@') && event?.trim().length === 1)) {
-      this.mentionMembers.set([
+      const _mentionMembers = [
         {
           user: {
             id: 'all',
@@ -2942,15 +2971,21 @@ export class GuestChatComponent
           },
         },
         ...(this.conversationSelected()?.members || []),
-      ]);
+      ]
       this.activeSuggestionIndex = 0;
-      this.autocompleteTrigger.openPanel();
+      if (isEdit){
+        this.editMessageMentionMembers.set(_mentionMembers);
+        this.autocompleteEditMessageTrigger.openPanel();
+      }else{
+          this.autocompleteTrigger.openPanel();
+      }
       return true;
     }
 
     switch (event?.code) {
       case 'Escape':
         this.autocompleteTrigger.closePanel();
+        this.autocompleteEditMessageTrigger.closePanel();
         break;
       case 'Backspace':
         // Loại bỏ span rỗng
@@ -2958,7 +2993,7 @@ export class GuestChatComponent
         break;
       case 'Space':
         requestAnimationFrame(() => {
-          const info = logCaretPosition(document.querySelector('[contenteditable]'));
+          const info = logCaretPosition(editElement);
           const fullname = info?.span?.getAttribute('data-fullname')
           if (fullname?.length && ((info?.offset ?? 0) >= (fullname?.length ?? 0)) ||
                 (info?.absPos ?? 0) > (fullname?.length ?? 0)) {
@@ -2980,7 +3015,7 @@ export class GuestChatComponent
       case 'ArrowLeft':
       case 'ArrowRight':
         requestAnimationFrame(() => {
-          const info = logCaretPosition(document.querySelector('[contenteditable]'));
+          const info = logCaretPosition(editElement);
           const fullname = info?.span?.getAttribute('data-fullname')
           if (fullname?.length && ((info?.offset ?? 0) >= (fullname?.length ?? 0)) ||
                 (info?.absPos ?? 0) > (fullname?.length ?? 0)) {
@@ -3003,30 +3038,32 @@ export class GuestChatComponent
 
     this.sendMessageTextChangeBehavior.next(element?.textContent || '');
 
-    if (this.autocompleteTrigger.panelOpen) {
+    if (this.autocompleteTrigger.panelOpen || this.autocompleteEditMessageTrigger.panelOpen) {
       switch (event?.key) {
         // case 'Space':
         case 'Escape':
           this.autocompleteTrigger.closePanel();
+          this.autocompleteEditMessageTrigger.closePanel();
           return true;
         case 'ArrowDown':
           event.preventDefault();
           this.activeSuggestionIndex =
-            (this.activeSuggestionIndex + 1) % this.mentionMembers().length;
+            (this.activeSuggestionIndex + 1) % (isEdit ? this.editMessageMentionMembers().length : this.mentionMembers().length);
           this.scrollActiveIntoView();
           return true;
         case 'ArrowUp':
           event.preventDefault();
           this.activeSuggestionIndex =
-            (this.activeSuggestionIndex - 1 + this.mentionMembers().length) %
-            this.mentionMembers().length;
+            (this.activeSuggestionIndex - 1 + (isEdit ? this.editMessageMentionMembers().length : this.mentionMembers().length)) %
+            (isEdit ? this.editMessageMentionMembers().length : this.mentionMembers().length);
           this.scrollActiveIntoView();
           return true;
         case 'Enter':
-          const _editor = document.querySelector('[contenteditable]');
-          const _mention = this.getMentionAfterAt(_editor);
-          this.onReRenderMessage(_mention?.length);
+          // const _editor = document.querySelector('[contenteditable]');
+          const _mention = this.getMentionAfterAt(editElement);
+          this.onReRenderMessage(_mention?.length, null, isEdit);
           this.autocompleteTrigger.closePanel();
+          this.autocompleteEditMessageTrigger.closePanel();
           event.preventDefault();
           return true;
         default:
@@ -3035,8 +3072,8 @@ export class GuestChatComponent
     }
     let mention = '';
     if (typeof event !== 'string' && event?.key) {
-      const editor = document.querySelector('[contenteditable]');
-      mention = this.getMentionAfterAt(editor);
+      // const editor = document.querySelector('[contenteditable]');
+      mention = this.getMentionAfterAt(editElement);
       if (new RegExp('^[A-Za-z0-9]+$').test(event.key)) {
         mention = `${mention}${event.key}`;
       }
@@ -3053,9 +3090,12 @@ export class GuestChatComponent
           `${item?.user?.fullname?.toLowerCase()}`.includes(_.cloneDeep(mention)?.replace('@', '')?.toLowerCase()) ||
           removeVietnameseTones(`${item?.user?.fullname?.toLowerCase()}`).includes(removeVietnameseTones(_.cloneDeep(mention)?.replace('@', '')?.toLowerCase()))
         ) || [];
-      this.mentionMembers.set(_mentionMembers);
+      if (isEdit)
+        this.editMessageMentionMembers.set(_mentionMembers);
+      else
+        this.mentionMembers.set(_mentionMembers);
     } else if (mention?.length === 1 && mention.startsWith('@')) {
-      this.mentionMembers.set([
+      const _mentionMembers = [
         {
           user: {
             id: 'all',
@@ -3063,16 +3103,28 @@ export class GuestChatComponent
           },
         },
         ...(this.conversationSelected()?.members || []),
-      ]);
+      ];
+      if (isEdit)
+        this.editMessageMentionMembers.set(_mentionMembers);
+      else
+        this.mentionMembers.set(_mentionMembers);
     } else {
       this.mentionMembers.set([])
+      this.editMessageMentionMembers.set([])
     }
-    if (!this.mentionMembers()?.length || !mention?.length || !element?.textContent?.trim().length) {
+    if ((!this.mentionMembers()?.length && !isEdit) 
+      || (!this.editMessageMentionMembers()?.length && isEdit) 
+      || !mention?.length 
+      || !element?.textContent?.trim().length) {
       this.autocompleteTrigger.closePanel();
+      this.autocompleteEditMessageTrigger.closePanel();
     } else {
       if (!this.autocompleteTrigger.panelOpen && mention.startsWith('@')){
         this.activeSuggestionIndex = 0;
-        this.autocompleteTrigger.openPanel();
+        if (isEdit)
+          this.autocompleteEditMessageTrigger.openPanel();
+        else
+          this.autocompleteTrigger.openPanel();
       }
     }
     return false;
@@ -3098,15 +3150,16 @@ export class GuestChatComponent
     insertSpaceEscapingElementAtCaret('\u00A0');
   }
 
-  onReRenderMessage(lengthRegex: number = 0, deleteMention: any = null) {
+  onReRenderMessage(lengthRegex: number = 0, deleteMention: any = null, isEdit: boolean = false) {
+    const _mentionMembers = isEdit ? this.editMessageMentionMembers() : this.mentionMembers();
     if (!deleteMention) {
       const anchor = document.createElement('span');
-      anchor.textContent = `@${this.mentionMembers()[this.activeSuggestionIndex].user?.fullname
+      anchor.textContent = `@${_mentionMembers[this.activeSuggestionIndex].user?.fullname
         }`;
       anchor.dataset['id'] =
-        this.mentionMembers()[this.activeSuggestionIndex].user?.id;
+        _mentionMembers[this.activeSuggestionIndex].user?.id;
       anchor.dataset['fullname'] =
-        this.mentionMembers()[this.activeSuggestionIndex].user?.fullname;
+        _mentionMembers[this.activeSuggestionIndex].user?.fullname;
       anchor.className =
         'mention no-underline text-blue-300-chat owner-color cursor-pointer';
 
@@ -3593,7 +3646,6 @@ export class GuestChatComponent
     this.editMessageMentionMembers.set(
       this.conversationSelected()?.members || []
     );
-    this.editMessageSelected.set(message);
     const _messages = _.cloneDeep(this.conversationSelected()?.messages);
     const messageHoverIndex = _messages?.findIndex(
       (item: any) => item.id === message.id
@@ -3642,6 +3694,9 @@ export class GuestChatComponent
           ..._messages[messageHoverIndex],
           isEdit: true,
           messageEdited: _messageMention,
+          mentionHTML: _messages[messageHoverIndex].mentionHTML 
+            || _messages[messageHoverIndex].urlHTML 
+            || _messages[messageHoverIndex].message,
         };
         this.conversationSelected.update((currValue) =>
           Object.assign({}, currValue, {
@@ -3664,6 +3719,7 @@ export class GuestChatComponent
         });
         break;
     }
+    this.editMessageSelected.set(_messages[messageHoverIndex]);
     this.onCloseMessageAction(null);
   }
 
@@ -3672,46 +3728,34 @@ export class GuestChatComponent
     const messageEditIndex = _messages?.findIndex(
       (item: any) => item.id === message.id
     );
+    const _hasLink = urlVerify(_messages[messageEditIndex].mentionHTML);
+    const mentions = extractMentionSpans(_messages[messageEditIndex].mentionHTML);
+    const _messageEdited = replaceMentionSpansWithTokens(_messages[messageEditIndex].mentionHTML);
     if (isSave) {
       this.isUpdateEditMessageSelected.set(true);
       _messages[messageEditIndex] = {
         ..._messages[messageEditIndex],
-        message: _messages[messageEditIndex].messageEdited,
         isEdit: false,
-        hasLink: urlVerify(_messages[messageEditIndex].messageEdited),
+        hasLink: _hasLink,
+        hasMention: !!mentions?.length,
+        innerHTML: this.sanitizer.bypassSecurityTrustHtml(
+          urlModify(_messages[messageEditIndex].mentionHTML, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
+        ),
+        message: _messageEdited,
       };
-      if (urlVerify(_messages[messageEditIndex].messageEdited))
-        _messages[messageEditIndex] = {
-          ..._messages[messageEditIndex],
-          hasLink: true,
-          innerHTML: this.sanitizer.bypassSecurityTrustHtml(
-            urlModify(_messages[messageEditIndex].messageEdited, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
-          ),
-        };
-      // if (_messages[messageEditIndex].messageEdited?.match(this.mentionRegex)?.length)
-
-      // const _messageMention = _newMessage.message.replace(this.mentionRegex, (match: any) => {
-      //   const mentionUser = this.conversationSelected()?.members?.find((item: any) => `[@${item.user.id}]` === match)
-      //   return (`<span class="mention no-underline text-blue-300-chat owner-color cursor-pointer"`
-      //     + `data-id="${mentionUser?.user?.id}" data-fullname="${mentionUser?.user?.fullname}">`
-      //     + `@${mentionUser?.user?.fullname || ''}</span>`)
-      // })
-      // _newMessage = {
-      //   ..._newMessage,
-      //   hasMention: true,
-      //   innerHTML: this.sanitizer.bypassSecurityTrustHtml(urlModify(_messageMention))
-      // }
       this.commonService.setRemoveShowGlobalLoading(true);
       await this.guestService.chatMessageEdit({
         act: ChatMessageAct.EDIT,
         messageId: message.id,
-        message: message.messageEdited,
+        message: _messageEdited,
       });
     } else {
+      const innerHTMLString = this.sanitizer.sanitize(SecurityContext.HTML, _messages[messageEditIndex].innerHTML);
       _messages[messageEditIndex] = {
         ..._messages[messageEditIndex],
         messageEdited: _messages[messageEditIndex].message,
         isEdit: false,
+        mentionHTML: innerHTMLString,
       };
     }
     this.isUpdateEditMessageSelected.set(false);
@@ -3720,6 +3764,7 @@ export class GuestChatComponent
         messages: _messages,
       })
     );
+    this.editMessageSelected.set(null);
   }
 
   onKeydownEditMessage(event: any, message: any) {
@@ -3810,6 +3855,26 @@ export class GuestChatComponent
     this.autocompleteEditMessageTrigger.closePanel();
   }
 
+  onHtmlChange(event: any) {
+    this.onMentionMember(event, 
+      document.getElementById(event.target.id),
+      true
+    );
+  }
+
+  onMentions(event: any) {
+    console.log('onMentions',event);
+  }
+
+  searchUsers = (q: string): Observable<MentionUser[]> => {
+    const all: MentionUser[] = [
+      { id: '1', fullname: 'Nguyễn Văn A' },
+      { id: '2', fullname: 'Trần Thị B' },
+      { id: '3', fullname: 'Lê C' },
+    ];
+    const res = all.filter(u => u.fullname.toLowerCase().includes(q.toLowerCase()));
+    return of(res).pipe(delay(80));
+  };
   /** Leave group */
   async onLeaveGroup() {
     this.addEditDialogSetting = {
