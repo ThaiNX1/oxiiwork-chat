@@ -336,7 +336,15 @@
                                             class="w-full flex flex-column align-items-stretch justify-content-start border-1 border-round border-gray-400 p-3 gap-3"
                                             matAutocompleteOrigin
                                             #mentionEditMessageAutocompleteOrigin="matAutocompleteOrigin">
-                                            <textarea
+                                              <div  [id]="item.id + '_editMessage'"
+                                                    class="bg-white border-1 border-gray-400 border-round-md p-2"
+                                                    contenteditable
+                                                    contenteditableModel
+                                                    [contenteditableHtml]="true"
+                                                    [(ngModel)]="item.mentionHTML"
+                                                    (keydown)="onHtmlChange($event)">
+                                              </div>
+                                            <!-- <textarea
                                               [(ngModel)]="item.messageEdited"
                                               rows="3"
                                               class="border-none"
@@ -346,7 +354,7 @@
                                                   item
                                                 )
                                               ">
-                                            </textarea>
+                                            </textarea> -->
                                             <input
                                               hidden
                                               [matAutocomplete]="
