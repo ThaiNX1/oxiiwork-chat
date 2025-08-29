@@ -1,4 +1,4 @@
-<mat-drawer-container class="w-full h-full m-0" [hasBackdrop]="true"
+<mat-drawer-container class="w-full h-full m-0 guest-layout" [hasBackdrop]="true"
                       (backdropClick)="onCloseSlideNav()">
   <mat-drawer #slideNav [mode]="'over'" [position]="slideNavConfig?.position || 'start'"
               [disableClose]="!!slideNavConfig?.disableClose">
@@ -71,6 +71,13 @@
                     </div>
                   }
                 </button> -->
+                <button
+                  class="p-2 bg-transparent aspect-square border-none text-color min-w-0 flex align-items-center justify-content-center cursor-pointer"
+                  [matMenuTriggerFor]="menuApp">
+                  <mat-icon class="h-auto w-auto text-2xl">
+                    widgets
+                  </mat-icon>
+                </button>
                 <div class="flex flex-column align-items-stretch justify-content-center gap-1">
                   <p class="m-0 font-semibold">{{ user?.officeUser?.fullname }}</p>
                   <p class="m-0 text-gray-500">{{ user?.officeUser?.titleName }}</p>
@@ -87,6 +94,22 @@
                     <em class="fa fa-sign-out icons"></em>
                     <span>{{ 'MENU_GUEST.LOG_OUT' | translate }}</span>
                   </button>
+                </mat-menu>
+                <mat-menu #menuApp="matMenu" class="menu-info">
+                  <div class="flex align-items-start justify-content-start gap-3 flex-wrap p-3">
+                    <a [routerLink]="['/guest/chat']" 
+                       [routerLinkActive]="['bg-gray-100']"
+                       class="flex flex-column align-items-center justify-content-start gap-2 p-2 no-underline border-round-sm">
+                      <img class="w-2rem h-2rem" src="assets/images/guest/ic_menu_chat.svg" alt="Nhắn tin">
+                      <span>Tin nhắn</span>
+                    </a>
+                    <a [routerLink]="['/guest/office']" 
+                       [routerLinkActive]="['bg-gray-100']"
+                       class="flex flex-column align-items-center justify-content-start gap-2 p-2 no-underline border-round-sm">
+                      <img class="w-2rem h-2rem" src="assets/images/guest/logo_short.svg" alt="Văn phòng">
+                      <span>Văn phòng</span>
+                    </a>
+                  </div>
                 </mat-menu>
               </div>
             </div>

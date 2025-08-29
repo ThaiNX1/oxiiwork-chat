@@ -961,7 +961,11 @@
               class="flex flex-column align-items-stretch justify-content-start relative bg-white py-3 border-r-lg-24 h-cal-dot120">
               @if (conversationSelected()?.id) {
                 <div
-                  class="flex-1 flex flex-column align-items-stretch justify-content-start overflow-auto">
+                  class="flex-1 flex flex-column align-items-stretch justify-content-start overflow-auto"
+                  (dragenter)="onDragEnter($event)"
+                  (dragover)="onDragOver($event)"
+                  (dragleave)="onDragLeave($event)"
+                  (drop)="onDrop($event)">
                   <div
                     class="flex align-items-center justify-content-start px-3 gap-3">
                     <div
@@ -1052,7 +1056,9 @@
                   </div>
                   <mat-divider class="w-full mt-3"></mat-divider>
                   <div
-                    class="flex-1 flex flex-column align-items-stretch p-2 justify-content-start overflow-auto relative">
+                    class="flex-1 flex flex-column align-items-stretch p-2 justify-content-start overflow-auto relative"
+                      [class.drag-active]="isDragOverFile()">
+                    <!-- <div  class="absolute top-0 left-0 w-full h-full bg-blue-300 opacity-30 z-1"></div> -->
                     @if (scrollToEnd() && conversationSelected()?.id) {
                       <button
                         class="absolute bottom-8rem right-2rem w-3rem h-3rem border-circle bg-white shadow-1 flex align-items-center justify-content-center z-5"
@@ -1788,11 +1794,6 @@
                                     ?.innerHTML ||
                                   sendMessageForm.value['replyMessage']?.message
                                 "></div>
-                              <!--                            @if(sendMessageForm.value['replyMessage']){}-->
-                              <!--                            <p-->
-                              <!--                              class="text-gray-500 text-left break-word max-h-2rem overflow-hidden">-->
-                              <!--                              {{ sendMessageForm.value['replyMessage'].message }}-->
-                              <!--                            </p>-->
                             }
                           }
                         </div>

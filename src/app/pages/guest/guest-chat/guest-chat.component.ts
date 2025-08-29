@@ -207,6 +207,10 @@ export class GuestChatComponent
   timer: any;
   prevTime = new Date();
 
+  /** Drag/drop file */
+  isDragOverFile = signal(false);
+  dragCounter = 0;
+
   constructor(
     private overlay: Overlay,
     private elementRef: ElementRef,
@@ -2438,20 +2442,22 @@ export class GuestChatComponent
       case ChatMessageType.CALL:
         break;
       case ChatMessageType.DOC:
-        if (event.target.files?.length) {
+        if (event.target.files?.length || event.dataTransfer?.files?.length) {
+          const _files = event.target.files || event.dataTransfer?.files;
+          console.log('_files', _files);
           args = {
             receiverId: this.conversationSelected().receiverId,
             conversationId: this.conversationSelected().id,
             message: '',
-            type: event.target.files[0]?.type?.includes('image')
+            type: _files[0]?.type?.includes('image')
               ? ChatMessageType.IMAGE
-              : event.target.files[0]?.type?.includes('video')
+              : _files[0]?.type?.includes('video')
                 ? ChatMessageType.VIDEO
                 : ChatMessageType.DOC,
-            fileName: event.target.files[0].name,
+            fileName: _files[0].name,
           };
-          for (let i = 0; i < event.target.files.length; i++) {
-            files.push(event.target.files[i]);
+          for (let i = 0; i < _files.length; i++) {
+            files.push(_files[i]);
           }
         }
         break;
@@ -2502,6 +2508,7 @@ export class GuestChatComponent
         break;
       case ChatMessageType.TEXT:
         if ((event.key === 'Enter' && !event.shiftKey) || sendNow) {
+          console.log('sendNow', sendNow);
           event.preventDefault();
           args = {
             receiverId: this.conversationSelected().receiverId,
@@ -2975,7 +2982,7 @@ export class GuestChatComponent
       this.activeSuggestionIndex = 0;
       if (isEdit){
         this.editMessageMentionMembers.set(_mentionMembers);
-        this.autocompleteEditMessageTrigger.openPanel();
+        this.autocompleteEditMessageTrigger?.openPanel();
       }else{
           this.autocompleteTrigger.openPanel();
       }
@@ -2985,7 +2992,7 @@ export class GuestChatComponent
     switch (event?.code) {
       case 'Escape':
         this.autocompleteTrigger.closePanel();
-        this.autocompleteEditMessageTrigger.closePanel();
+        this.autocompleteEditMessageTrigger?.closePanel();
         break;
       case 'Backspace':
         // Loại bỏ span rỗng
@@ -3038,12 +3045,12 @@ export class GuestChatComponent
 
     this.sendMessageTextChangeBehavior.next(element?.textContent || '');
 
-    if (this.autocompleteTrigger.panelOpen || this.autocompleteEditMessageTrigger.panelOpen) {
+    if (this.autocompleteTrigger?.panelOpen || this.autocompleteEditMessageTrigger?.panelOpen) {
       switch (event?.key) {
         // case 'Space':
         case 'Escape':
           this.autocompleteTrigger.closePanel();
-          this.autocompleteEditMessageTrigger.closePanel();
+          this.autocompleteEditMessageTrigger?.closePanel();
           return true;
         case 'ArrowDown':
           event.preventDefault();
@@ -3063,7 +3070,7 @@ export class GuestChatComponent
           const _mention = this.getMentionAfterAt(editElement);
           this.onReRenderMessage(_mention?.length, null, isEdit);
           this.autocompleteTrigger.closePanel();
-          this.autocompleteEditMessageTrigger.closePanel();
+          this.autocompleteEditMessageTrigger?.closePanel();
           event.preventDefault();
           return true;
         default:
@@ -3117,12 +3124,12 @@ export class GuestChatComponent
       || !mention?.length 
       || !element?.textContent?.trim().length) {
       this.autocompleteTrigger.closePanel();
-      this.autocompleteEditMessageTrigger.closePanel();
+      this.autocompleteEditMessageTrigger?.closePanel();
     } else {
       if (!this.autocompleteTrigger.panelOpen && mention.startsWith('@')){
         this.activeSuggestionIndex = 0;
         if (isEdit)
-          this.autocompleteEditMessageTrigger.openPanel();
+          this.autocompleteEditMessageTrigger?.openPanel();
         else
           this.autocompleteTrigger.openPanel();
       }
@@ -3781,7 +3788,7 @@ export class GuestChatComponent
           ...(this.conversationSelected()?.members || []),
         ]);
         this.activeSuggestionIndex = 0;
-        this.autocompleteEditMessageTrigger.openPanel();
+        this.autocompleteEditMessageTrigger?.openPanel();
         break;
       // case 'Backspace':
       //   if (_.endsWith(message.messageEdited, ' ')) {
@@ -3792,7 +3799,7 @@ export class GuestChatComponent
       //     return
       //   break
       case 'Space':
-        this.autocompleteEditMessageTrigger.closePanel();
+        this.autocompleteEditMessageTrigger?.closePanel();
         break;
       default:
         if (_.endsWith(message.messageEdited, ' ')) {
@@ -3852,7 +3859,7 @@ export class GuestChatComponent
         messages: _messages,
       })
     );
-    this.autocompleteEditMessageTrigger.closePanel();
+    this.autocompleteEditMessageTrigger?.closePanel();
   }
 
   onHtmlChange(event: any) {
@@ -4415,6 +4422,39 @@ export class GuestChatComponent
     // nếu option nằm phía dưới vùng nhìn thấy
     if (optRect.bottom > panelRect.bottom) {
       panelEl.scrollTop += (optRect.bottom - panelRect.bottom);
+    }
+  }
+
+  // Kéo thả file
+  onDragEnter(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragOverFile.set(true);
+    this.dragCounter++;
+    console.log('onDragEnter', this.dragCounter);
+  }
+
+  onDragOver(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragOverFile.set(true);
+  }
+
+  onDragLeave(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.dragCounter = Math.max(0, this.dragCounter - 1);
+    if (this.dragCounter === 0) this.isDragOverFile.set(false);
+  }
+
+  async onDrop(event: any) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragOverFile.set(false);
+    this.dragCounter = 0;
+    const files = event.dataTransfer?.files;
+    if (files?.length) {
+      await this.onSendMessage(event, ChatMessageType.DOC, true);
     }
   }
 }

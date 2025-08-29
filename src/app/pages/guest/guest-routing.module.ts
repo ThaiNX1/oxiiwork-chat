@@ -2,6 +2,7 @@ import {RouterModule, Routes} from "@angular/router";
 import {NgModule} from "@angular/core";
 import {GuestChatComponent} from "./guest-chat/guest-chat.component";
 import {ConversationCreateComponent} from "./mobile/conversation-create/conversation-create.component";
+import { OfficeCMSComponent } from "../office-cms/office-cms.component";
 
 const routes: Routes = [
   {
@@ -20,6 +21,10 @@ const routes: Routes = [
     path: 'chat/mobile/info-conversation',
     component: ConversationCreateComponent,
   },
+  {
+    path: 'office',
+    component: OfficeCMSComponent,
+  }
 ];
 
 @NgModule({

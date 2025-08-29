@@ -1,18 +1,46 @@
 /* Pane của CDK overlay */
 .msg-overlay-pane {
-    transform-origin: top center;            /* phù hợp kiểu đặt dưới-giữa */
-    animation: fadeInScale 140ms cubic-bezier(.2,.8,.2,1);
+  transform-origin: top center;
+  /* phù hợp kiểu đặt dưới-giữa */
+  animation: fadeInScale 140ms cubic-bezier(.2, .8, .2, 1);
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(.98);
   }
-  
-  @keyframes fadeInScale {
-    from { opacity: 0; transform: translateY(-4px) scale(.98); }
-    to   { opacity: 1; transform: translateY(0)    scale(1);  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
-  
-  /* (tuỳ chọn) animation khi đóng */
-  .msg-overlay-pane.closing {
-    animation: fadeOutScale 100ms ease-in forwards;
+}
+
+/* (tuỳ chọn) animation khi đóng */
+.msg-overlay-pane.closing {
+  animation: fadeOutScale 100ms ease-in forwards;
+}
+
+@keyframes fadeOutScale {
+  to {
+    opacity: 0;
+    transform: translateY(-4px) scale(.98);
   }
-  @keyframes fadeOutScale {
-    to { opacity: 0; transform: translateY(-4px) scale(.98); }
-  }
+}
+
+.drag-active::after {
+  content: 'Thả file vào đây';
+  position: absolute;
+  inset: 0;
+  background: var(--blue-300);
+  opacity: 0.3;
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 600;
+  font-size: 1.05rem;
+  pointer-events: none;
+}
