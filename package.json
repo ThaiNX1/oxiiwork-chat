@@ -7,6 +7,7 @@
     "start": "ng serve --host 0.0.0.0 --port 4200",
     "build": "ng build",
     "build:stg": "ng build --configuration staging",
+    "build:prod": "ng build --configuration production",
     "build:uat": "ng build --configuration uat",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
@@ -32,6 +33,7 @@
     "@lithiumjs/ngx-virtual-scroll": "^0.3.2",
     "@ngx-translate/core": "^15.0.0",
     "@ngx-translate/http-loader": "^8.0.0",
+    "@ngxs/store": "^18.1.6",
     "@types/file-saver": "^2.0.7",
     "angular-split": "^17.2.0",
     "apollo-angular": "^7.2.1",
@@ -67,6 +69,7 @@
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
+    "prettier": "^3.6.2",
     "typescript": "~5.4.2",
     "typescript-eslint": "8.26.0"
   },
