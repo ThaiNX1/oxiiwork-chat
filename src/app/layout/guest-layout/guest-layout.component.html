@@ -55,8 +55,8 @@
             }
           } @else {
             <div class="h-full flex align-items-center justify-content-between">
-              <div class="flex-1 flex align-items-center">
-                <img class="w-10rem ratio-16-9 ml-3" [src]="logoUrl" alt="Company Logo">
+              <div class="flex-1 flex align-items-center justify-content-start">
+                <img class="w-auto ml-3" [src]="logoUrl" alt="Company Logo" style="transform: scale(0.7);">
               </div>
               <div class="flex align-items-center justify-content-end gap-1">
                 <!-- <button
@@ -71,12 +71,46 @@
                     </div>
                   }
                 </button> -->
-                <button
+                <!-- <button
                   class="p-2 bg-transparent aspect-square border-none text-color min-w-0 flex align-items-center justify-content-center cursor-pointer"
                   [matMenuTriggerFor]="menuApp">
                   <mat-icon class="h-auto w-auto text-2xl">
                     widgets
                   </mat-icon>
+                </button> -->
+                <div class="flex align-items-stretch justify-content-end gap-3">
+                  <a [routerLink]="['/guest/chat']" 
+                     [routerLinkActive]="['menu-active']"
+                     class="menu-item flex flex-column align-items-center justify-content-center gap-2 no-underline border-round-sm relative"
+                     title="Nhắn tin">
+                    <img src="assets/images/guest/ic_menu_chat.svg" alt="Nhắn tin">
+                    @if(messageNotification()?.unreadCount > 0){
+                      <div class="w-10px h-10px border-circle bg-red-500 absolute top-5px right-0 flex align-items-center justify-content-center">
+                      </div>
+                    }
+                    <!-- <span>Tin nhắn</span> -->
+                  </a>
+                  <a [routerLink]="['/guest/office']" 
+                     [routerLinkActive]="['menu-active']"
+                     class="menu-item flex flex-column align-items-center justify-content-center gap-2 no-underline border-round-sm"
+                     title="Văn phòng">
+                    <img src="assets/images/guest/logo_short.svg" alt="Văn phòng">
+                    <!-- <span>Văn phòng</span> -->
+                  </a>
+                </div>
+                <button
+                  class="p-2 bg-transparent aspect-square border-none text-color min-w-0 flex align-items-center justify-content-center cursor-pointer relative"
+                  (click)="onOpenNotification()">
+                  <mat-icon class="h-auto w-auto text-2xl font-semibold">
+                    notifications_none
+                  </mat-icon>
+                  @if(unreadCount() > 0){
+                    <div class="w-18px h-18px border-circle bg-red-500 absolute top-0 right--5px flex align-items-center justify-content-center">
+                      <p class="text-white text-center" style="font-size: 9px !important;">
+                        {{ unreadCount() < 100 ? unreadCount() : '99' }}
+                      </p>
+                    </div>
+                  }
                 </button>
                 <div class="flex flex-column align-items-stretch justify-content-center gap-1">
                   <p class="m-0 font-semibold">{{ user?.officeUser?.fullname }}</p>
@@ -164,13 +198,15 @@
   <div class="w-30rem flex flex-column align-items-stretch justify-content-start gap-3 py-3 px-4 overflow-auto gray-500-scroll">
     <div class="flex align-items-center justify-content-between">
       <p class="font-semibold text-xl">{{ 'COMMON.LABEL.NOTI' | translate }}</p>
-      <button class="bg-transparent text-blue-300 border-0">
+      <button class="bg-transparent text-blue-300 border-0"
+        (click)="onMarkAllNotificationRead()">
         {{ 'COMMON.LABEL.NOTI_MARKED_READ' | translate }}
       </button>
     </div>
     <div class="flex-1 flex flex-column align-items-stretch justify-content-start overflow-auto gap-4">
       <mat-tab-group class="mat-tab-has-color flex flex-1 flex-column overflow-auto gray-500-scroll"
-                     >
+        [(selectedIndex)]="currentTabIndex"
+        (selectedTabChange)="onTabChange($event)">
         <mat-tab *ngFor="let tab of tabs" [label]="tab.name | translate">
           <ng-template matTabContent>
             <ng-container *ngTemplateOutlet="notificationContent"></ng-container>
@@ -186,46 +222,48 @@
   </div>
 </ng-template>
 <ng-template #notificationContent>
-  <div *ngIf="notifications()?.length > 0"
-       class="flex-1 flex flex-column align-items-stretch justify-content-start overflow-auto gap-4">
-    <ng-container *ngFor="let date of notifications()">
-      <div class="flex flex-column align-items-stretch justify-content-start gap-3">
-        <p class="m-0 font-semibold text-gray-500">{{ date.label | translate}}</p>
-        <div class="flex flex-column align-items-stretch justify-content-start">
-          <ng-container *ngFor="let noti of date.data">
-            <div
-              class="flex flex-column align-items-stretch justify-content-start px-4 py-3 gap-3 hover:bg-gray-100 cursor-pointer">
-              <div class="flex align-items-center justify-content-between">
-                <div class="flex-1 flex align-items-center justify-content-start gap-2">
-                  <mat-icon class="w-2rem"
-                            [ngClass]="noti.isRead ? 'text-gray-400' : 'text-blue-300'">
-                    circle
-                  </mat-icon>
-                  <!--                  <i class="fa fa-circle" aria-hidden="true"-->
-                  <!--                     [class.text-blue-300]="!noti.isRead"-->
-                  <!--                     [class.text-gray-500]="noti.isRead"></i>-->
-                  <span class="font-semibold">{{ noti.title | translate}}</span>
+  @if (notifications()?.length) {
+    <div class="flex-1 flex flex-column align-items-stretch justify-content-start overflow-auto gap-4">
+      @for (date of notifications(); track $index) {
+        <div class="flex flex-column align-items-stretch justify-content-start gap-3">
+          <p class="m-0 font-semibold text-gray-500">{{ date.label | translate}}</p>
+          <div class="flex flex-column align-items-stretch justify-content-start">
+            @for (noti of date.data; track noti.id) {
+              <div
+                (click)="onOpenNotificationDetail(noti)"
+                class="flex flex-column align-items-stretch justify-content-start px-4 py-3 gap-3 hover:bg-gray-100 cursor-pointer">
+                <div class="flex align-items-center justify-content-between">
+                  <div class="flex-1 flex align-items-center justify-content-start gap-2">
+                    <mat-icon class="w-2rem"
+                              [ngClass]="noti.isRead ? 'text-gray-400' : 'text-blue-300'">
+                      circle
+                    </mat-icon>
+                    <span class="font-semibold">{{ noti.title | translate}}</span>
+                  </div>
+                  <div class="w-5rem flex align-items-center justify-content-end">
+                    <p class="m-0 break-all text-gray-500 font-semibold">{{ noti.createdAt | date:'HH:mm' }}</p>
+                  </div>
                 </div>
-                <div class="w-5rem flex align-items-center justify-content-end">
-                  <p class="m-0 break-all text-gray-500 font-semibold">{{ noti.createdAt | date:'HH:mm' }}</p>
-                </div>
+                <p class="m-0 break-all">{{ noti.content }}</p>
               </div>
-              <p class="m-0 break-all">{{ noti.content }}</p>
-            </div>
-          </ng-container>
+            }
+          </div>
         </div>
-      </div>
-    </ng-container>
+      }
     <button class="bg-transparent text-center p-3 text-blue-300 font-semibold border-0">
       {{ 'COMMON.LABEL.NOTI_LOAD_MORE' | translate }}
     </button>
-  </div>
+    </div>
+  }
 </ng-template>
 
 <!-- Notification detail dialog-->
 <app-dialog-action [isShowDialog]="visibleNotification"
                    [setting]="notificationDetailSetting"
                    [showHeader]="false">
+</app-dialog-action>
+
+<ng-template #notificationDetailTemplate>
   <div class="flex-1 flex flex-column overflow-auto">
     <div class="flex-1 flex flex-column align-items-stretch gap-3 px-5 py-3 w-50rem overflow-auto">
       <p class="m-0 font-bold text-2xl text-left break-all">
@@ -245,19 +283,18 @@
         </div>
         <span class="text-gray-500">{{notificationDetail?.createdAt | date: 'dd-MM-yyyy'}}</span>
       </div>
-      <ng-container *ngIf="notificationDetail?.images?.length">
+      @if(notificationDetail?.images?.length) {
         <img [src]="notificationDetail?.images[0]?.location"
              class="w-full h-auto max-h-25rem object-cover"
              alt="Notification Image">
-      </ng-container>
-      <p class="m-0 w-full text-left break-all">
-        {{notificationDetail?.content}}
-      </p>
+      }
+      <div [innerHTML]="sanitizer.bypassSecurityTrustHtml(notificationDetail?.content)"
+           class="m-0 w-full text-left break-all"></div>
       <mat-divider class="w-full"></mat-divider>
-      <ng-container *ngIf="notificationDetail?.attachFiles?.length">
+      @if(notificationDetail?.attachFiles?.length) {
         <div class="flex flex-column align-items-stretch gap-3">
           <p class="m-0 font-semibold text-xl">{{ 'COMMON.LABEL.ATTACHMENT' | translate }}</p>
-          <ng-container *ngFor="let item of notificationDetail?.attachFiles">
+          @for (item of notificationDetail?.attachFiles; track item.id) {
             <div class="flex align-items-center justify-content-start gap-3 p-3 bg-gray-100 border-round-lg">
               <i class="fa fa-file-pdf-o text-red-500 text-2xl" aria-hidden="true"></i>
               <div class="flex-1 flex flex-column align-items-start justify-content-center gap-2">
@@ -268,19 +305,19 @@
                 </div>
               </div>
             </div>
-          </ng-container>
+          }
         </div>
-      </ng-container>
-      <ng-container *ngIf="notificationDetail?.images?.length">
+      }
+      @if(notificationDetail?.images?.length) {
         <div class="flex flex-column align-items-stretch gap-3">
           <p class="m-0 font-semibold text-xl">{{ 'COMMON.LABEL.IMAGE' | translate }} </p>
-          <ng-container *ngFor="let item of notificationDetail?.images">
+          @for (item of notificationDetail?.images; track item.id) {
             <div class="w-4rem h-4rem border-round">
               <img [src]="item.location" class="w-full h-full object-cover border-round" alt="Notification Image">
             </div>
-          </ng-container>
+          }
         </div>
-      </ng-container>
+      }
     </div>
   </div>
-</app-dialog-action>
+</ng-template>

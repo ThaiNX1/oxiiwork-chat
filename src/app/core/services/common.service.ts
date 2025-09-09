@@ -21,6 +21,7 @@ export class CommonService {
   fullScreen = signal(false)
   openSlideNav = signal(false)
   slideNavConfig = signal<any>(null)
+  messageNotification = signal<any>(null)
 
   constructor(
     private readonly _snackBar: MatSnackBar,

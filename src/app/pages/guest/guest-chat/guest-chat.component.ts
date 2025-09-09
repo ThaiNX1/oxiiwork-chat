@@ -279,7 +279,7 @@ export class GuestChatComponent
   }
 
   ngOnDestroy(): void {
-    this.websocketService.disconnect();
+    // this.websocketService.disconnect();
   }
 
   async ngOnInit() {
@@ -559,6 +559,14 @@ export class GuestChatComponent
         this.onSelectConversation(conversationSelected);
         this.injector.get(Store).dispatch(Reset);
       }
+      const unreadCount = this.conversations()?.reduce((total:number, conv:any) => {
+        if (conv?.unreadCount() > 0) total += conv?.unreadCount();
+        return total;
+      }, 0)
+      this.commonService.messageNotification.set({
+        unreadCount,
+        conversationSelectedId: this.conversationSelected()?.id,
+      })
     }
   }
 
@@ -682,6 +690,7 @@ export class GuestChatComponent
         });
       });
     }
+    this.countUnreadMessageGlobal()
   }
 
   onRemoveFile(index: number) {
@@ -1216,13 +1225,13 @@ export class GuestChatComponent
   /** Gửi tin nhắn */
   onListenMessage() {
     // Connect websocket
-    this.websocketService.connect();
+    // this.websocketService.connect();
 
     // Tin nhắn mới
     this.websocketService.on('message:sent', async (data) => {
       // console.log('message:sent', data);
       if (data.message?.senderId !== this.user.id) {
-        this.titleNotificationService.startBlinkingNotification();
+        // this.titleNotificationService.startBlinkingNotification();
         if (!this.commonService.smallScreen()) {
           let mess = data.message?.message;
           if (mess.match(this.mentionRegex)?.length) {
@@ -1417,6 +1426,7 @@ export class GuestChatComponent
             });
         });
       } else if (this.conversationSelected()?.id !== data.conversationId) {
+        this.titleNotificationService.startBlinkingNotification();
         const _conversations = _.cloneDeep(this.conversations());
         const conversationIndex = _conversations.findIndex(
           (conv: any) => conv.id === data.conversationId
@@ -1504,6 +1514,7 @@ export class GuestChatComponent
           }
         }
       }
+      this.countUnreadMessageGlobal()
     });
 
     // Đang soạn tin nhắn
@@ -2444,7 +2455,6 @@ export class GuestChatComponent
       case ChatMessageType.DOC:
         if (event.target.files?.length || event.dataTransfer?.files?.length) {
           const _files = event.target.files || event.dataTransfer?.files;
-          console.log('_files', _files);
           args = {
             receiverId: this.conversationSelected().receiverId,
             conversationId: this.conversationSelected().id,
@@ -2508,7 +2518,6 @@ export class GuestChatComponent
         break;
       case ChatMessageType.TEXT:
         if ((event.key === 'Enter' && !event.shiftKey) || sendNow) {
-          console.log('sendNow', sendNow);
           event.preventDefault();
           args = {
             receiverId: this.conversationSelected().receiverId,
@@ -2984,11 +2993,11 @@ export class GuestChatComponent
         this.editMessageMentionMembers.set(_mentionMembers);
         this.autocompleteEditMessageTrigger?.openPanel();
       }else{
+          this.mentionMembers.set(_mentionMembers);
           this.autocompleteTrigger.openPanel();
       }
       return true;
     }
-
     switch (event?.code) {
       case 'Escape':
         this.autocompleteTrigger.closePanel();
@@ -3458,6 +3467,7 @@ export class GuestChatComponent
 
         this.messageReActionOverlayRef = this.overlay.create({
           hasBackdrop: false,
+          backdropClass: '',
           positionStrategy,
           scrollStrategy: this.overlay.scrollStrategies.reposition(),
         });
@@ -4151,7 +4161,7 @@ export class GuestChatComponent
       await this.onGetMessage({
         ...this.conversationMessageFilter,
         lastKey: {
-          ...this.conversationMessageFilter?.lastKey,
+          // ...this.conversationMessageFilter?.lastKey,
           createdAt: mess.createdAt,
           conversationId: this.conversationSelected().id,
         },
@@ -4163,6 +4173,10 @@ export class GuestChatComponent
       document
         .getElementById(this.commonService.smallScreen() ? 'mobile_messageDiv' : 'messageDiv')
         ?.scrollTo(0, messElement.offsetTop - 100);
+    } else {
+      document
+        .getElementById(this.commonService.smallScreen() ? 'mobile_messageDiv' : 'messageDiv')
+        ?.scrollTo(0, 0);
     }
   }
 
@@ -4431,7 +4445,6 @@ export class GuestChatComponent
     event.stopPropagation();
     this.isDragOverFile.set(true);
     this.dragCounter++;
-    console.log('onDragEnter', this.dragCounter);
   }
 
   onDragOver(event: DragEvent) {
@@ -4456,6 +4469,17 @@ export class GuestChatComponent
     if (files?.length) {
       await this.onSendMessage(event, ChatMessageType.DOC, true);
     }
+  }
+
+  async countUnreadMessageGlobal() {
+    const unreadCount = this.conversations()?.reduce((total:number, conv:any) => {
+      if (conv?.unreadCount() > 0) total += conv?.unreadCount();
+      return total;
+    }, 0)
+    this.commonService.messageNotification.set({
+      unreadCount,
+      conversationSelectedId: this.conversationSelected()?.id,
+    })
   }
 }
 

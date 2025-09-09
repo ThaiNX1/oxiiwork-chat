@@ -56,7 +56,10 @@ export class DialogActionComponent implements OnChanges, OnDestroy {
   openModal(data: any): void {
     this.dialogRef = this.dialog.open(DialogActionTemplateComponent,
       {
-        data: data,
+        data: {
+          ...data,
+          showHeader: this.showHeader
+        },
         maxHeight: '80vh'
       }
     )

@@ -1,8 +1,10 @@
-<div mat-dialog-title class="max-w-full min-w-18rem p-3 flex align-items-center justify-content-center bg-gray-02">
-  @if (data?.header?.length) {
-    <h4 class="font-semibold m-0 txt-01-color">{{ (data?.header || '') | translate }}</h4>
-  }
-</div>
+@if (data?.showHeader) {
+  <div mat-dialog-title class="max-w-full min-w-18rem p-3 flex align-items-center justify-content-center bg-gray-02">
+    @if (data?.header?.length) {
+      <h4 class="font-semibold m-0 txt-01-color">{{ (data?.header || '') | translate }}</h4>
+    }
+  </div>
+}
 <mat-dialog-content>
   <ng-container [ngTemplateOutlet]="data?.template"></ng-container>
 </mat-dialog-content>

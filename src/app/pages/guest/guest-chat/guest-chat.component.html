@@ -446,12 +446,7 @@
                                                     ? ''
                                                     : 'text-white'
                                                 "
-                                                [innerHTML]="
-                                                  item?.hasMention ||
-                                                  item?.hasLink
-                                                    ? item.innerHTML
-                                                    : item.message
-                                                "
+                                                [innerHTML]="item.innerHTML"
                                                 (click)="
                                                   onOpenLinkMobile($event)
                                                 "></p>
@@ -468,8 +463,13 @@
                                                   MessageRole.MEMBER
                                                     ? ''
                                                     : 'text-white'
+                                                "
+                                                [innerHTML]="
+                                                  (item?.hasMention ||
+                                                  item?.hasLink)
+                                                    ? item.innerHTML
+                                                    : item.message
                                                 ">
-                                                {{ item.message | unescapeRn }}
                                               </p>
                                             }
                                             @if (item.previewLink) {
@@ -1884,9 +1884,6 @@
                         </div>
                         <div
                           class="w-auto flex align-items-center justify-content-end gap-1">
-                          <!--                      <button class="bg-transparent border-none flex align-items-center justify-content-center">-->
-                          <!--                        <mat-icon class="text-2xl text-gray-500">image</mat-icon>-->
-                          <!--                      </button>-->
                           <button
                             type="button"
                             tabindex="-1"
@@ -1896,9 +1893,6 @@
                               >emoji_emotions</mat-icon
                             >
                           </button>
-                          <!-- @if (geolocationCurrentPosition()) {
-                      
-                      } -->
                           <button
                             type="button"
                             tabindex="-1"
@@ -2776,16 +2770,11 @@
                         {{ message.createdAt | date: 'dd/MM/yyyy HH:mm' }}
                       </p>
                     </div>
-                    <!--                          <div class="flex align-items-start justify-content-start">-->
-                    <!--                            <p class="h-full overflow-hidden text-overflow-ellipsis break-word">-->
-                    <!--                              {{ message.message }}-->
-                    <!--                            </p>-->
                     <div
                       class="flex align-items-start justify-content-start flex-wrap break-word"
                       [innerHTML]="
                         sanitizer.bypassSecurityTrustHtml(message.message)
                       "></div>
-                    <!--                          </div>-->
                   </div>
                 </div>
               }

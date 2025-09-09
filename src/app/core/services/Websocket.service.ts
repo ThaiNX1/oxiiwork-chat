@@ -43,6 +43,10 @@ export class WebsocketService {
     this.socket.emit(event, data);
   }
 
+  hasListener(event: string): boolean {
+    return this.socket.hasListeners(event);
+  }
+
   // Listen for an event from the server
   on(event: string, callback: (data: any) => void): void {
     this.socket.on(event, callback);
