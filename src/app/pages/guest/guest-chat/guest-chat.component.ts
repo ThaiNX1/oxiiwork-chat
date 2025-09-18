@@ -2,7 +2,7 @@ import {
   ConnectedPosition,
   FlexibleConnectedPositionStrategy,
   Overlay,
-  OverlayRef
+  OverlayRef,
 } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { Location } from '@angular/common';
@@ -19,10 +19,13 @@ import {
   signal,
   TemplateRef,
   ViewChild,
-  ViewContainerRef
+  ViewContainerRef,
 } from '@angular/core';
 import { FormArray, FormControl, FormGroup, Validators } from '@angular/forms';
-import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import {
+  MatAutocomplete,
+  MatAutocompleteTrigger,
+} from '@angular/material/autocomplete';
 import { MatDrawer } from '@angular/material/sidenav';
 import { DomSanitizer } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
@@ -67,7 +70,7 @@ import {
   string2date,
   unwrapFontTags,
   urlModify,
-  urlVerify
+  urlVerify,
 } from '../../../core/utils/utils';
 import { GuestService } from '../guest.service';
 import { Store } from '@ngxs/store';
@@ -83,7 +86,8 @@ import { MentionUser } from './mention/mention.types';
 })
 export class GuestChatComponent
   extends BaseGuestClass
-  implements OnInit, OnDestroy {
+  implements OnInit, OnDestroy
+{
   @ViewChild('drawer') drawer!: MatDrawer;
   MessageViewType = { ...MessageViewType, ...ChatMessageType };
   MessageRole = MessageRole;
@@ -144,7 +148,8 @@ export class GuestChatComponent
   overlayTemplates: any = [];
 
   /** Mention */
-  @ViewChild('autocompleteTrigger') autocompleteTrigger!: MatAutocompleteTrigger;
+  @ViewChild('autocompleteTrigger')
+  autocompleteTrigger!: MatAutocompleteTrigger;
   @ViewChild('auto', { static: false }) auto!: MatAutocomplete;
   mentionMembers = signal<any>([]);
   activeSuggestionIndex = 0;
@@ -216,7 +221,7 @@ export class GuestChatComponent
     private elementRef: ElementRef,
     private viewContainerRef: ViewContainerRef,
     private location: Location,
-    private injector: Injector,
+    private injector: Injector
   ) {
     super();
     this.addEditDialogSetting = {
@@ -261,7 +266,9 @@ export class GuestChatComponent
     const canvas = document.createElement('canvas') as HTMLCanvasElement;
     this.myCanvasContext = canvas?.getContext('2d');
     this.myCanvasContext.font = '14px Inter';
-    this.widthCompare = this.commonService.smallScreen() ? (document.body.clientWidth) * 0.75 : (document.body.clientWidth - 450) * 0.75;
+    this.widthCompare = this.commonService.smallScreen()
+      ? document.body.clientWidth * 0.75
+      : (document.body.clientWidth - 450) * 0.75;
     const conversationId =
       this.activatedRoute.snapshot.queryParams['conversationId'];
     if (conversationId) {
@@ -355,7 +362,7 @@ export class GuestChatComponent
 
     this.updateReadMessageIndexBehavior
       .pipe(debounceTime(500))
-      .subscribe(async (messageIndex) => {
+      .subscribe(async messageIndex => {
         if (
           this.conversationSelected()?.unreadCount() &&
           this.coordinateFormInputMessage()?.x &&
@@ -408,13 +415,13 @@ export class GuestChatComponent
           size: 100,
         });
       }
-    }, 60000)
+    }, 60000);
   }
 
   onValueChange() {
     this.forwardMessageForm.controls['keyword'].valueChanges
       .pipe(debounceTime(300))
-      .subscribe(async (value) => {
+      .subscribe(async value => {
         if (value) {
           const responses = await Promise.all([
             this.guestService.conversationGetUserFullOrgChartList({
@@ -447,35 +454,35 @@ export class GuestChatComponent
           //   size: 20
           // })
           const _officeUsers = responses[0]?.officeUsers?.filter(
-            (user) => user.id !== this.user.id
+            user => user.id !== this.user.id
           );
           this.searchUserList.set([...(_officeUsers || []), ..._conversations]);
         }
       });
     this.conversationSelectedFilterForm.controls['keyword'].valueChanges
       .pipe(debounceTime(300))
-      .subscribe(async (value) => {
+      .subscribe(async value => {
         if (value?.trim()?.length > 1) {
           await this.onSearchMessage(this.messageSearchTabSelected());
         }
       });
     this.addEditForm.controls['keyword'].valueChanges
       .pipe(debounceTime(300))
-      .subscribe(async (value) => {
+      .subscribe(async value => {
         if (value) {
           await this.onSearchUser(ChatConversationType.Direct);
         }
       });
     this.newGroupConversationForm.controls['keyword'].valueChanges
       .pipe(debounceTime(300))
-      .subscribe(async (value) => {
+      .subscribe(async value => {
         if (value) {
           await this.onSearchUser(ChatConversationType.Group);
         }
       });
     this.conversationFilterForm.controls['keyword'].valueChanges
       .pipe(debounceTime(300))
-      .subscribe(async (value) => {
+      .subscribe(async value => {
         // if (value) {
         await this.onGetConversations({
           keyword: value || '',
@@ -536,37 +543,48 @@ export class GuestChatComponent
               message: lastMessage,
             },
             isToday: item?.lastMessageAt
-              ? compareAsc(startOfDay(new Date(item.lastMessageAt)), startOfDay(new Date())) === 0
+              ? compareAsc(
+                  startOfDay(new Date(item.lastMessageAt)),
+                  startOfDay(new Date())
+                ) === 0
               : false,
           };
           arr.push(_conversation);
           return arr;
         }, []) || [];
       if (filter?.page)
-        this.conversations.update((value) => [
+        this.conversations.update(value => [
           ...this.conversations(),
           ..._conversations,
         ]);
-      else this.conversations.update((value) => [..._conversations]);
+      else this.conversations.update(value => [..._conversations]);
       this.conversationFilter = {
         ...filter,
         endPage:
           !response?.conversations?.length ||
           (response?.conversations?.length < filter?.size && filter.page === 0),
       };
-      if (this.commonService.smallScreen() && this.newGroupConversationMobile()) {
-        const conversationSelected = this.conversations().find((conv: any) => conv.id === this.newGroupConversationMobile()?.id);
+      if (
+        this.commonService.smallScreen() &&
+        this.newGroupConversationMobile()
+      ) {
+        const conversationSelected = this.conversations().find(
+          (conv: any) => conv.id === this.newGroupConversationMobile()?.id
+        );
         this.onSelectConversation(conversationSelected);
         this.injector.get(Store).dispatch(Reset);
       }
-      const unreadCount = this.conversations()?.reduce((total:number, conv:any) => {
-        if (conv?.unreadCount() > 0) total += conv?.unreadCount();
-        return total;
-      }, 0)
+      const unreadCount = this.conversations()?.reduce(
+        (total: number, conv: any) => {
+          if (conv?.unreadCount() > 0) total += conv?.unreadCount();
+          return total;
+        },
+        0
+      );
       this.commonService.messageNotification.set({
         unreadCount,
         conversationSelectedId: this.conversationSelected()?.id,
-      })
+      });
     }
   }
 
@@ -606,7 +624,7 @@ export class GuestChatComponent
               if (file) {
                 const reader = new FileReader();
                 // Convert image file to a Data URL
-                reader.onload = (e) => {
+                reader.onload = e => {
                   const checkFile = this.messageFiles?.find(
                     (_file: any) =>
                       _file.fileName === file?.name &&
@@ -626,7 +644,7 @@ export class GuestChatComponent
                       path: '',
                       error: '',
                     });
-                  this.conversationSelected.update((value) =>
+                  this.conversationSelected.update(value =>
                     Object.assign({}, value, { multipleLineTextbox: true })
                   );
                 };
@@ -690,7 +708,7 @@ export class GuestChatComponent
         });
       });
     }
-    this.countUnreadMessageGlobal()
+    this.countUnreadMessageGlobal();
   }
 
   onRemoveFile(index: number) {
@@ -699,12 +717,11 @@ export class GuestChatComponent
   }
 
   async onGetConversationDetail(conversationId: string) {
-    const response = await this.guestService.chatConversationDetail(
-      conversationId
-    );
+    const response =
+      await this.guestService.chatConversationDetail(conversationId);
     if (response) {
       const isAdmin = response?.members?.find(
-        (member) => member.user?.id === this.user.id && member.admin
+        member => member.user?.id === this.user.id && member.admin
       );
 
       // xoá đếm số tin nhắn
@@ -714,7 +731,7 @@ export class GuestChatComponent
         )
       );
 
-      this.conversationSelected.update((currValue) =>
+      this.conversationSelected.update(currValue =>
         Object.assign({}, currValue, {
           ...response,
           members: [
@@ -749,7 +766,7 @@ export class GuestChatComponent
   }
 
   async onSearchInConversation() {
-    this.conversationSelected.update((currentValue) =>
+    this.conversationSelected.update(currentValue =>
       Object.assign({}, currentValue, {
         showSearch: true,
         showInfo: false,
@@ -759,7 +776,7 @@ export class GuestChatComponent
     this.messageSearchFilter.set(null);
     this.messageSearchResult.set(null);
     if (this.commonService.smallScreen()) {
-      this.commonService.slideNavConfig.update((currValue) =>
+      this.commonService.slideNavConfig.update(currValue =>
         Object.assign({}, currValue, {
           position: 'end',
           disableClose: true,
@@ -771,7 +788,7 @@ export class GuestChatComponent
   }
 
   onShowMemberGroup() {
-    this.conversationSelected.update((currentValue) =>
+    this.conversationSelected.update(currentValue =>
       Object.assign({}, currentValue, {
         showSearch: false,
         showInfo: false,
@@ -779,7 +796,7 @@ export class GuestChatComponent
       })
     );
     if (this.commonService.smallScreen()) {
-      this.commonService.slideNavConfig.update((currValue) =>
+      this.commonService.slideNavConfig.update(currValue =>
         Object.assign({}, currValue, {
           position: 'end',
           disableClose: true,
@@ -796,7 +813,7 @@ export class GuestChatComponent
       (mem: any) => mem?.user?.id !== this.user?.id
     );
     this.partnerInformation.set(_partner);
-    this.conversationSelected.update((currentValue) =>
+    this.conversationSelected.update(currentValue =>
       Object.assign({}, currentValue, {
         showSearch: false,
         showMember: false,
@@ -804,7 +821,7 @@ export class GuestChatComponent
       })
     );
     if (this.commonService.smallScreen()) {
-      this.commonService.slideNavConfig.update((currValue) =>
+      this.commonService.slideNavConfig.update(currValue =>
         Object.assign({}, currValue, {
           position: 'end',
           disableClose: true,
@@ -815,7 +832,7 @@ export class GuestChatComponent
   }
 
   onCloseSearchInConversation() {
-    this.conversationSelected.update((currentValue) =>
+    this.conversationSelected.update(currentValue =>
       Object.assign({}, currentValue, {
         showSearch: false,
         showMember: false,
@@ -838,7 +855,7 @@ export class GuestChatComponent
   onUploadAvatar(event: any) {
     const file = event.target.files[0];
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = e => {
       this.newGroupConversationForm.patchValue({
         avatarUrl: e.target?.result,
         fileUpload: event.target.files[0],
@@ -918,7 +935,7 @@ export class GuestChatComponent
           conversation.id === this.conversationSelected().id
       );
       _conversations.splice(conversationIndex, 1);
-      this.conversations.update((value) => [..._conversations]);
+      this.conversations.update(value => [..._conversations]);
       this.conversationSelected.set(null);
     }
   }
@@ -934,9 +951,8 @@ export class GuestChatComponent
       onlyActive: true,
     };
     const memberGroupIds =
-      this.groupConversationMemberArray
-        ?.getRawValue()
-        ?.map((item) => item.id) || [];
+      this.groupConversationMemberArray?.getRawValue()?.map(item => item.id) ||
+      [];
     const response =
       await this.guestService.conversationGetUserFullOrgChartList(filter);
     const _officeUsers =
@@ -980,7 +996,7 @@ export class GuestChatComponent
             const _conversations = _.cloneDeep(this.conversations())?.filter(
               (conv: any) => conv.id !== conv.tempId
             );
-            this.conversations.update((value) => [
+            this.conversations.update(value => [
               newConversation,
               ..._conversations,
             ]);
@@ -993,7 +1009,7 @@ export class GuestChatComponent
           );
           if (conversationIndex !== -1)
             conversations.splice(conversationIndex, 1);
-          this.conversations.update((value) => [
+          this.conversations.update(value => [
             {
               ...conversationDetail,
               unreadCount: signal(0),
@@ -1010,7 +1026,7 @@ export class GuestChatComponent
       case ChatConversationType.Group:
         const checkUserExist = this.groupConversationMemberArray
           .getRawValue()
-          ?.find((it) => it.id === item.id);
+          ?.find(it => it.id === item.id);
         if (checkUserExist) return;
         this.groupConversationMemberArray.push(
           new FormGroup({
@@ -1037,7 +1053,7 @@ export class GuestChatComponent
             memberIds: [
               ...this.groupConversationMemberArray
                 .getRawValue()
-                ?.map((it) => it.id),
+                ?.map(it => it.id),
               // this.user.id
             ],
           };
@@ -1065,7 +1081,7 @@ export class GuestChatComponent
                   uploadLinkResponse.data?.[0]?.presignedUrl
                 )
                 .subscribe(() => {
-                  this.conversationSelected.update((value) =>
+                  this.conversationSelected.update(value =>
                     Object.assign({}, value, {
                       imgUrl: uploadLinkResponse.data?.[0]?.url,
                     })
@@ -1090,7 +1106,7 @@ export class GuestChatComponent
                 conversationId: this.newGroupConversationForm.value.id,
               });
             if (updateResponse) {
-              this.conversationSelected.update((value) =>
+              this.conversationSelected.update(value =>
                 Object.assign({}, value, {
                   members: updateResponse.members,
                   name: updateResponse.name,
@@ -1121,7 +1137,7 @@ export class GuestChatComponent
                 messages: [],
                 unreadCount: signal(0),
               };
-              this.conversations.update((currValue) => [
+              this.conversations.update(currValue => [
                 _conversation,
                 ...currValue,
               ]);
@@ -1179,7 +1195,7 @@ export class GuestChatComponent
                   });
                 return arr;
               }, []) || [];
-            this.conversations.update((currValue) => [
+            this.conversations.update(currValue => [
               ..._conversations,
               ...currValue,
             ]);
@@ -1195,16 +1211,15 @@ export class GuestChatComponent
           const _learGroupArgs = {
             conversationId: this.conversationSelected()?.id,
           };
-          const leaveGroupResponse = await this.guestService.conversationLeave(
-            _learGroupArgs
-          );
+          const leaveGroupResponse =
+            await this.guestService.conversationLeave(_learGroupArgs);
           if (leaveGroupResponse) {
             const _conversations = _.cloneDeep(this.conversations());
             const _conversationIndex = _conversations?.findIndex(
               (conv: any) => conv.id === this.conversationSelected()?.id
             );
             _conversations.splice(_conversationIndex, 1);
-            this.conversations.update((value) => [..._conversations]);
+            this.conversations.update(value => [..._conversations]);
             this.conversationSelected.set(null);
           }
           this.visibleAddEditDialog = false;
@@ -1218,7 +1233,8 @@ export class GuestChatComponent
   }
 
   replaceFirstUUID(input: string, newUUID: string): string {
-    const uuidRegex = /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi;
+    const uuidRegex =
+      /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi;
     return input.replace(uuidRegex, newUUID);
   }
 
@@ -1228,15 +1244,17 @@ export class GuestChatComponent
     // this.websocketService.connect();
 
     // Tin nhắn mới
-    this.websocketService.on('message:sent', async (data) => {
+    this.websocketService.on('message:sent', async data => {
       // console.log('message:sent', data);
       if (data.message?.senderId !== this.user.id) {
         // this.titleNotificationService.startBlinkingNotification();
         if (!this.commonService.smallScreen()) {
           let mess = data.message?.message;
           if (mess.match(this.mentionRegex)?.length) {
-            const mentions = data.message?.mentionTo?.map((x: { fullname: any; }) => x.fullname).join(', ');
-            mess = this.replaceFirstUUID(data.message?.message, mentions)
+            const mentions = data.message?.mentionTo
+              ?.map((x: { fullname: any }) => x.fullname)
+              .join(', ');
+            mess = this.replaceFirstUUID(data.message?.message, mentions);
           }
           this.notificationService.showNotification(
             '💬 ' + data.message?.sender?.fullname,
@@ -1244,7 +1262,6 @@ export class GuestChatComponent
             data.conversationId
           );
         }
-
       }
       if (
         this.conversationSelected()?.id === data.conversationId &&
@@ -1272,34 +1289,45 @@ export class GuestChatComponent
             ..._newMessage,
             message: _newMessage.message.replace(/\r?\n/g, '<br>'),
             hasLink: urlVerify(data.message?.message),
-            urlHTML: urlModify(data.message?.message, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>'),
+            urlHTML: urlModify(
+              data.message?.message,
+              this.commonService.smallScreen()
+            ).replace(/\r?\n/g, '<br>'),
             innerHTML: this.sanitizer.bypassSecurityTrustHtml(
-              urlModify(data.message?.message, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
+              urlModify(
+                data.message?.message,
+                this.commonService.smallScreen()
+              ).replace(/\r?\n/g, '<br>')
             ),
             previewLink: _.last(data.message?.message?.match(this.urlRegex)),
           };
         if (_newMessage.message.match(this.mentionRegex)?.length) {
-          const _messageMention = _newMessage.message.replace(
-            this.mentionRegex,
-            (match: any) => {
+          const _messageMention = _newMessage.message
+            .replace(this.mentionRegex, (match: any) => {
               const mentionUser = this.conversationSelected()?.members?.find(
                 (item: any) => `[@${item.user.id}]` === match
               );
               return match !== '[@all]'
                 ? `<span class="mention no-underline text-blue-300-chat owner-color cursor-pointer"` +
-                `data-id="${mentionUser?.user?.id}" data-fullname="${mentionUser?.user?.fullname}">` +
-                `@${mentionUser?.user?.fullname || ''}</span>`
+                    `data-id="${mentionUser?.user?.id}" data-fullname="${mentionUser?.user?.fullname}">` +
+                    `@${mentionUser?.user?.fullname || ''}</span>`
                 : `<span class="mention no-underline text-blue-300-chat owner-color cursor-pointer"` +
-                `data-id="all" data-fullname="Tất cả">` +
-                `@All</span>`;
-            }
-          ).replace(/\r?\n/g, '<br>');
+                    `data-id="all" data-fullname="Tất cả">` +
+                    `@All</span>`;
+            })
+            .replace(/\r?\n/g, '<br>');
           _newMessage = {
             ..._newMessage,
             hasMention: true,
-            mentionHTML: urlModify(_messageMention, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>'),
+            mentionHTML: urlModify(
+              _messageMention,
+              this.commonService.smallScreen()
+            ).replace(/\r?\n/g, '<br>'),
             innerHTML: this.sanitizer.bypassSecurityTrustHtml(
-              urlModify(_messageMention, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
+              urlModify(
+                _messageMention,
+                this.commonService.smallScreen()
+              ).replace(/\r?\n/g, '<br>')
             ),
           };
         }
@@ -1327,7 +1355,7 @@ export class GuestChatComponent
             message: format(new Date(), 'dd/MM/yyyy'),
             firstMessage: false,
           };
-          this.conversationSelected.update((currValue) =>
+          this.conversationSelected.update(currValue =>
             Object.assign({}, currValue, {
               messages: [
                 ...currValue.messages,
@@ -1337,7 +1365,7 @@ export class GuestChatComponent
             })
           );
         } else {
-          this.conversationSelected.update((currValue) =>
+          this.conversationSelected.update(currValue =>
             Object.assign({}, currValue, {
               messages: [...currValue.messages, _newMessage],
             })
@@ -1386,10 +1414,11 @@ export class GuestChatComponent
               message: lastMessage,
             },
             lastMessageAt: data?.message?.createdAt,
-            isToday: compareAsc(
-              startOfDay(new Date(data?.message?.createdAt)),
-              startOfDay(new Date())
-            ) === 0,
+            isToday:
+              compareAsc(
+                startOfDay(new Date(data?.message?.createdAt)),
+                startOfDay(new Date())
+              ) === 0,
           };
           // if (this.conversationSelected()?.id === this.conversationSelected()?.tempId && data.message?.senderId === this.user.id) {
           //   _conversations[conversationIndex] = {
@@ -1402,7 +1431,7 @@ export class GuestChatComponent
           //     tempId: null
           //   }))
           // }
-          this.conversations.update((currValue) => [..._conversations]);
+          this.conversations.update(currValue => [..._conversations]);
         }
         this.commonService.setRemoveShowGlobalLoading(true);
         await this.guestService.chatMessageUpdateRead({
@@ -1470,16 +1499,17 @@ export class GuestChatComponent
               message: lastMessage,
             },
             lastMessageAt: data?.message?.createdAt,
-            isToday: compareAsc(
-              startOfDay(new Date(data?.message?.createdAt)),
-              startOfDay(new Date())
-            ) === 0,
+            isToday:
+              compareAsc(
+                startOfDay(new Date(data?.message?.createdAt)),
+                startOfDay(new Date())
+              ) === 0,
           };
           const cloneConversation = _.cloneDeep(
             _conversations[conversationIndex]
           );
           _conversations.splice(conversationIndex, 1);
-          this.conversations.update((currValue) => [
+          this.conversations.update(currValue => [
             cloneConversation,
             ..._conversations,
           ]);
@@ -1495,7 +1525,7 @@ export class GuestChatComponent
               ),
             };
             if (data.message?.senderId !== this.user.id) {
-              this.conversations.update((currValue) => [
+              this.conversations.update(currValue => [
                 newConversation,
                 ...currValue,
               ]);
@@ -1503,7 +1533,7 @@ export class GuestChatComponent
               const conversations = _.cloneDeep(this.conversations()).filter(
                 (conv: any) => conv.id && conv.id !== conv.tempId
               );
-              this.conversations.update((currValue) => [
+              this.conversations.update(currValue => [
                 newConversation,
                 ...conversations,
               ]);
@@ -1514,11 +1544,11 @@ export class GuestChatComponent
           }
         }
       }
-      this.countUnreadMessageGlobal()
+      this.countUnreadMessageGlobal();
     });
 
     // Đang soạn tin nhắn
-    this.websocketService.on('message:typing', (data) => {
+    this.websocketService.on('message:typing', data => {
       // console.log('message:typing', data)
       if (this.conversationSelected()?.id === data?.conversationId)
         this.senderTyping.set(data);
@@ -1526,7 +1556,7 @@ export class GuestChatComponent
     });
     this.sendMessageTextChangeBehavior
       .pipe(debounceTime(200))
-      .subscribe((value) => {
+      .subscribe(value => {
         this.websocketService.emit('message:typing', {
           conversationId: this.conversationSelected()?.id,
           isTyping:
@@ -1535,7 +1565,7 @@ export class GuestChatComponent
       });
 
     // Reaction
-    this.websocketService.on('message:reaction', (result) => {
+    this.websocketService.on('message:reaction', result => {
       // console.log('message:reaction', result);
       if (result?.data?.conversationId === this.conversationSelected()?.id) {
         const _messages = this.conversationSelected()?.messages || [];
@@ -1564,7 +1594,7 @@ export class GuestChatComponent
               ],
             });
           }
-          this.conversationSelected.update((currValue) =>
+          this.conversationSelected.update(currValue =>
             Object.assign({}, currValue, {
               messages: _messages,
             })
@@ -1574,7 +1604,7 @@ export class GuestChatComponent
     });
 
     // Xóa khỏi nhóm
-    this.websocketService.on('conversation:leaved', async (data) => {
+    this.websocketService.on('conversation:leaved', async data => {
       // console.log('conversation:leaved', data);
       this.websocketService.emit('conversation:leaved', {
         conversationId: this.conversationSelected()?.id,
@@ -1591,7 +1621,7 @@ export class GuestChatComponent
     });
 
     // Thêm vào nhóm
-    this.websocketService.on('conversation:joined', async (data) => {
+    this.websocketService.on('conversation:joined', async data => {
       // console.log('conversation:joined', data);
       this.websocketService.emit('conversation:joined', {
         conversationId: data?.conversationId,
@@ -1608,7 +1638,7 @@ export class GuestChatComponent
             ),
           };
           if (data.message?.senderId !== this.user.id) {
-            this.conversations.update((currValue) => [
+            this.conversations.update(currValue => [
               newConversation,
               ...currValue,
             ]);
@@ -1616,7 +1646,7 @@ export class GuestChatComponent
             const conversations = _.cloneDeep(this.conversations()).filter(
               (conv: any) => conv.id && conv.id !== conv.tempId
             );
-            this.conversations.update((currValue) => [
+            this.conversations.update(currValue => [
               newConversation,
               ...conversations,
             ]);
@@ -1626,7 +1656,7 @@ export class GuestChatComponent
     });
 
     // Xóa tin nhắn
-    this.websocketService.on('message:delete', async (data) => {
+    this.websocketService.on('message:delete', async data => {
       if (this.conversationSelected()?.id === data.conversationId) {
         const _messages = _.cloneDeep(this.conversationSelected()?.messages);
         const _messageIndex = _messages.findIndex(
@@ -1637,14 +1667,14 @@ export class GuestChatComponent
             _messages[_messageIndex]?.firstMessage &&
             _messages[_messageIndex + 1]?.id &&
             _messages[_messageIndex + 1]?.role ===
-            _messages[_messageIndex]?.role &&
+              _messages[_messageIndex]?.role &&
             _messages[_messageIndex + 1]?.type !==
-            this.MessageViewType.DATE_GROUP
+              this.MessageViewType.DATE_GROUP
           ) {
             _messages[_messageIndex + 1].firstMessage = true;
           }
           _messages.splice(_messageIndex, 1);
-          this.conversationSelected.update((currValue) =>
+          this.conversationSelected.update(currValue =>
             Object.assign({}, currValue, {
               messages: _messages,
             })
@@ -1654,7 +1684,7 @@ export class GuestChatComponent
     });
 
     // sửa tin nhắn
-    this.websocketService.on('message:edit', async (data) => {
+    this.websocketService.on('message:edit', async data => {
       // console.log('message:edit', data);
 
       const _messages = _.cloneDeep(this.conversationSelected()?.messages);
@@ -1668,39 +1698,50 @@ export class GuestChatComponent
             _messages[_messageIndex] = {
               ..._messages[_messageIndex],
               hasLink: urlVerify(data.message?.message),
-              urlHTML: urlModify(data.message?.message, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>'),
+              urlHTML: urlModify(
+                data.message?.message,
+                this.commonService.smallScreen()
+              ).replace(/\r?\n/g, '<br>'),
               innerHTML: this.sanitizer.bypassSecurityTrustHtml(
-                urlModify(data.message?.message, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
+                urlModify(
+                  data.message?.message,
+                  this.commonService.smallScreen()
+                ).replace(/\r?\n/g, '<br>')
               ),
               previewLink: _.last(data.message?.message?.match(this.urlRegex)),
             };
           if (data.message?.message.match(this.mentionRegex)?.length) {
-            const _messageMention = data.message?.message.replace(
-              this.mentionRegex,
-              (match: any) => {
+            const _messageMention = data.message?.message
+              .replace(this.mentionRegex, (match: any) => {
                 const mentionUser = this.conversationSelected()?.members?.find(
                   (item: any) => `[@${item.user.id}]` === match
                 );
                 return match !== '[@all]'
                   ? `<span class="mention no-underline text-blue-300-chat owner-color cursor-pointer"` +
-                  `data-id="${mentionUser?.user?.id}" data-fullname="${mentionUser?.user?.fullname}">` +
-                  `@${mentionUser?.user?.fullname || ''}</span>`
+                      `data-id="${mentionUser?.user?.id}" data-fullname="${mentionUser?.user?.fullname}">` +
+                      `@${mentionUser?.user?.fullname || ''}</span>`
                   : `<span class="mention no-underline text-blue-300-chat owner-color cursor-pointer"` +
-                  `data-id="all" data-fullname="Tất cả">` +
-                  `@All</span>`;
-              }
-            ).replace(/\r?\n/g, '<br>');
+                      `data-id="all" data-fullname="Tất cả">` +
+                      `@All</span>`;
+              })
+              .replace(/\r?\n/g, '<br>');
             _messages[_messageIndex] = {
               ..._messages[_messageIndex],
               hasMention: true,
-              mentionHTML: urlModify(_messageMention, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>'),
+              mentionHTML: urlModify(
+                _messageMention,
+                this.commonService.smallScreen()
+              ).replace(/\r?\n/g, '<br>'),
               innerHTML: this.sanitizer.bypassSecurityTrustHtml(
-                urlModify(_messageMention, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
+                urlModify(
+                  _messageMention,
+                  this.commonService.smallScreen()
+                ).replace(/\r?\n/g, '<br>')
               ),
             };
           }
 
-          this.conversationSelected.update((currValue) =>
+          this.conversationSelected.update(currValue =>
             Object.assign({}, currValue, {
               messages: _messages,
             })
@@ -1748,14 +1789,13 @@ export class GuestChatComponent
             },
             lastMessageAt: data?.message?.createdAt,
           };
-          this.conversations.update((currValue) => [..._conversations]);
+          this.conversations.update(currValue => [..._conversations]);
         }
       }
     });
   }
 
   async onGetMessage(filter: any) {
-
     this.titleNotificationService.stopBlinkingNotification();
     this.conversationMessageIndex.set(0);
     // const mentionRegex = /\[@[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\]/gm
@@ -1768,7 +1808,7 @@ export class GuestChatComponent
     };
     const messageGroupByDate = _.groupBy(
       _.reverse(response?.messages || []),
-      (value) => {
+      value => {
         return format(value.createdAt as any, 'dd/MM/yyyy');
       }
     );
@@ -1819,12 +1859,18 @@ export class GuestChatComponent
               ..._newMessage,
               hasLink: urlVerify(_newMessage.message),
               urlHTML: urlVerify(_newMessage.message)
-                ? urlModify(_newMessage.message, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
+                ? urlModify(
+                    _newMessage.message,
+                    this.commonService.smallScreen()
+                  ).replace(/\r?\n/g, '<br>')
                 : '',
               innerHTML: urlVerify(_newMessage.message)
                 ? this.sanitizer.bypassSecurityTrustHtml(
-                  urlModify(_newMessage.message, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
-                )
+                    urlModify(
+                      _newMessage.message,
+                      this.commonService.smallScreen()
+                    ).replace(/\r?\n/g, '<br>')
+                  )
                 : _newMessage.message,
             };
             if (
@@ -1842,27 +1888,32 @@ export class GuestChatComponent
           if (mess.message?.match(this.mentionRegex)?.length) {
             // let _messageMention = urlModify(mess.message)
             // const withBr = mess.message.replace(/\\r\\n|\\n|\\r|\r\n|\n|\r/g, '<br/>');
-            const _messageMention = mess.message?.replace(
-              this.mentionRegex,
-              (match: any) => {
+            const _messageMention = mess.message
+              ?.replace(this.mentionRegex, (match: any) => {
                 const mentionUser = mess?.mentionTo?.find(
                   (item: any) => `[@${item.id}]` === match
                 );
                 return match !== '[@all]'
                   ? `<span class="mention no-underline text-blue-300-chat owner-color cursor-pointer"` +
-                  `data-id="${mentionUser?.id}" data-fullname="${mentionUser?.fullname}">` +
-                  `@${mentionUser?.fullname || ''}</span>`
+                      `data-id="${mentionUser?.id}" data-fullname="${mentionUser?.fullname}">` +
+                      `@${mentionUser?.fullname || ''}</span>`
                   : `<span class="mention no-underline text-blue-300-chat owner-color cursor-pointer"` +
-                  `data-id="all" data-fullname="Tất cả">` +
-                  `@All</span>`;
-              }
-            ).replace(/\r?\n/g, '<br>');
+                      `data-id="all" data-fullname="Tất cả">` +
+                      `@All</span>`;
+              })
+              .replace(/\r?\n/g, '<br>');
             _newMessage = {
               ..._newMessage,
               hasMention: true,
-              mentionHTML: urlModify(_messageMention, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>'),
+              mentionHTML: urlModify(
+                _messageMention,
+                this.commonService.smallScreen()
+              ).replace(/\r?\n/g, '<br>'),
               innerHTML: this.sanitizer.bypassSecurityTrustHtml(
-                urlModify(_messageMention, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
+                urlModify(
+                  _messageMention,
+                  this.commonService.smallScreen()
+                ).replace(/\r?\n/g, '<br>')
               ),
             };
           }
@@ -1883,7 +1934,7 @@ export class GuestChatComponent
       lastDateGroupUpdateMessageIndex !== -1 &&
       _.head<any>(currentMessages)?.message &&
       _messages[lastDateGroupUpdateMessageIndex].message ===
-      _.head<any>(currentMessages)?.message
+        _.head<any>(currentMessages)?.message
     ) {
       currentMessages = _.drop(currentMessages);
     }
@@ -1894,14 +1945,14 @@ export class GuestChatComponent
     const mentionMessage = updateListMessages
       .slice(_lastMessageReadIndex)
       ?.find(
-        (mess) =>
+        mess =>
           mess.hasMention &&
           mess.mentionTo?.length &&
           mess.mentionTo.find(
             (mention: any) => mention.id === this.user?.officeUser?.id
           )
       );
-    this.conversationSelected.update((currValue) =>
+    this.conversationSelected.update(currValue =>
       Object.assign({}, currValue, {
         messages: updateListMessages,
         lastMessageReadIndex: _lastMessageReadIndex,
@@ -1942,7 +1993,6 @@ export class GuestChatComponent
           this.conversations.update(() => [..._conversations]);
         }
       });
-
   }
 
   async onLoadMoreMessage(event: any) {
@@ -1976,7 +2026,7 @@ export class GuestChatComponent
   }
 
   onSpacePressMobile() {
-    insertSpaceEscapingElementAtCaret('\u00A0')
+    insertSpaceEscapingElementAtCaret('\u00A0');
   }
 
   onOpenLinkMobile(event: any) {
@@ -1993,10 +2043,12 @@ export class GuestChatComponent
   }
 
   onHoldMessageMobile(event: any) {
-    const messageId = event.nativeElement.getAttribute('data-id')
+    const messageId = event.nativeElement.getAttribute('data-id');
     if (messageId) {
-      const message = this.conversationSelected()?.messages?.find((item: any) => item.id === messageId)
-      this.onShowMessageAction(message)
+      const message = this.conversationSelected()?.messages?.find(
+        (item: any) => item.id === messageId
+      );
+      this.onShowMessageAction(message);
     }
   }
 
@@ -2006,10 +2058,13 @@ export class GuestChatComponent
     sendNow = false
   ) {
     this.onResizeTextboxChat();
-    const element = document.getElementById('mobile-contenteditable-input-text-message');
+    const element = document.getElementById(
+      'mobile-contenteditable-input-text-message'
+    );
     this.sendMessageForm.patchValue({
-      text: `${element?.textContent}${event?.key?.length === 1 ? event?.key : ''
-        }`,
+      text: `${element?.textContent}${
+        event?.key?.length === 1 ? event?.key : ''
+      }`,
     });
     // // Mention
     if (this.onMentionMember(event, element)) return;
@@ -2048,41 +2103,46 @@ export class GuestChatComponent
       case ChatMessageType.LOCATION:
         if (!this.geolocationCurrentPosition()) {
           // Location
-          navigator.permissions
-            .query({ name: 'geolocation' })
-            .then((result) => {
-              if (result?.state !== 'granted') {
-                navigator.geolocation.getCurrentPosition(
-                  (result) => {
-                    this.geolocationCurrentPosition.set(result.coords);
-                  },
-                  (err) => {
-                    this.geolocationCurrentPosition.set(null);
-                  }
-                );
-              } else {
-                navigator.geolocation.getCurrentPosition(
-                  (result) => {
-                    this.geolocationCurrentPosition.set(result.coords);
-                  },
-                  (err) => {
-                    this.geolocationCurrentPosition.set(null);
-                  }
-                );
-              }
-            });
+          navigator.permissions.query({ name: 'geolocation' }).then(result => {
+            if (result?.state !== 'granted') {
+              navigator.geolocation.getCurrentPosition(
+                result => {
+                  this.geolocationCurrentPosition.set(result.coords);
+                },
+                err => {
+                  this.geolocationCurrentPosition.set(null);
+                }
+              );
+            } else {
+              navigator.geolocation.getCurrentPosition(
+                result => {
+                  this.geolocationCurrentPosition.set(result.coords);
+                },
+                err => {
+                  this.geolocationCurrentPosition.set(null);
+                }
+              );
+            }
+          });
         }
 
-        const _locationMessage = `https://www.google.com/maps/place/${this.geolocationCurrentPosition().longitude
-          },${this.geolocationCurrentPosition().latitude}`;
+        const _locationMessage = `https://www.google.com/maps/place/${
+          this.geolocationCurrentPosition().longitude
+        },${this.geolocationCurrentPosition().latitude}`;
         args = {
           conversationId: this.conversationSelected().id,
           message: _locationMessage,
           type: ChatMessageType.LOCATION,
           hasLink: true,
-          urlHTML: urlModify(_locationMessage, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>'),
+          urlHTML: urlModify(
+            _locationMessage,
+            this.commonService.smallScreen()
+          ).replace(/\r?\n/g, '<br>'),
           innerHTML: this.sanitizer.bypassSecurityTrustHtml(
-            urlModify(_locationMessage, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
+            urlModify(
+              _locationMessage,
+              this.commonService.smallScreen()
+            ).replace(/\r?\n/g, '<br>')
           ),
         };
         break;
@@ -2119,12 +2179,20 @@ export class GuestChatComponent
             // format gửi tin nhắn
             args = {
               ...args,
-              message: _message?.replace(/\u0000/g, ' ')?.replace('\u00A0', ' '),
+              message: _message
+                ?.replace(/\u0000/g, ' ')
+                ?.replace('\u00A0', ' '),
               hasMention: hasMention,
               hasLink: urlVerify(_message),
-              urlHTML: urlModify(_message, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>'),
+              urlHTML: urlModify(
+                _message,
+                this.commonService.smallScreen()
+              ).replace(/\r?\n/g, '<br>'),
               innerHTML: this.sanitizer.bypassSecurityTrustHtml(
-                urlModify(_message, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
+                urlModify(_message, this.commonService.smallScreen()).replace(
+                  /\r?\n/g,
+                  '<br>'
+                )
               ),
             };
           }
@@ -2135,10 +2203,7 @@ export class GuestChatComponent
       case ChatMessageType.VOICE_NOTE:
         break;
     }
-    if (
-      (args || this.messageFiles?.length) &&
-      (sendNow)
-    ) {
+    if ((args || this.messageFiles?.length) && sendNow) {
       if (this.sendMessageForm.value['replyMessage']) {
         args = {
           ...args,
@@ -2181,26 +2246,31 @@ export class GuestChatComponent
         previewLink: _.last(args?.message?.match(this.urlRegex)),
       };
       if (args?.hasMention) {
-        const _messageMention = _newMessage.message.replace(
-          this.mentionRegex,
-          (match: any) => {
+        const _messageMention = _newMessage.message
+          .replace(this.mentionRegex, (match: any) => {
             const mentionUser = this.conversationSelected()?.members?.find(
               (item: any) => `[@${item.user.id}]` === match
             );
             return match !== '[@all]'
               ? `<span class="mention no-underline text-blue-300-chat owner-color cursor-pointer"` +
-              `data-id="${mentionUser?.id}" data-fullname="${mentionUser?.fullname}">` +
-              `@${mentionUser?.user?.fullname || ''}</span>`
+                  `data-id="${mentionUser?.id}" data-fullname="${mentionUser?.fullname}">` +
+                  `@${mentionUser?.user?.fullname || ''}</span>`
               : `<span class="mention no-underline text-blue-300-chat owner-color cursor-pointer"` +
-              `data-id="all" data-fullname="Tất cả">` +
-              `@All</span>`;
-          }
-        ).replace(/\r?\n/g, '<br>');
+                  `data-id="all" data-fullname="Tất cả">` +
+                  `@All</span>`;
+          })
+          .replace(/\r?\n/g, '<br>');
         _newMessage = {
           ..._newMessage,
-          mentionHTML: urlModify(_messageMention, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>'),
+          mentionHTML: urlModify(
+            _messageMention,
+            this.commonService.smallScreen()
+          ).replace(/\r?\n/g, '<br>'),
           innerHTML: this.sanitizer.bypassSecurityTrustHtml(
-            urlModify(_messageMention, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
+            urlModify(
+              _messageMention,
+              this.commonService.smallScreen()
+            ).replace(/\r?\n/g, '<br>')
           ),
         };
       }
@@ -2250,7 +2320,7 @@ export class GuestChatComponent
           message: format(new Date(), 'dd/MM/yyyy'),
           firstMessage: false,
         };
-        this.conversationSelected.update((currValue) =>
+        this.conversationSelected.update(currValue =>
           Object.assign({}, currValue, {
             messages: [
               ...currValue.messages,
@@ -2260,7 +2330,7 @@ export class GuestChatComponent
           })
         );
       } else {
-        this.conversationSelected.update((currValue) =>
+        this.conversationSelected.update(currValue =>
           Object.assign({}, currValue, {
             messages: [...currValue.messages, ..._newMessages],
           })
@@ -2364,7 +2434,7 @@ export class GuestChatComponent
               responseMediaMessage
             );
           },
-          error: (err: any) => { },
+          error: (err: any) => {},
         });
         this.messageFiles = [];
       }
@@ -2406,7 +2476,7 @@ export class GuestChatComponent
                   responseFileMessage
                 );
               },
-              (err: any) => { }
+              (err: any) => {}
             );
           this.sendMessageForm.controls['file'].reset();
           break;
@@ -2428,8 +2498,9 @@ export class GuestChatComponent
         : 'contenteditable-input-text-message'
     );
     this.sendMessageForm.patchValue({
-      text: `${element?.textContent}${event?.key?.length === 1 ? event?.key : ''
-        }`,
+      text: `${element?.textContent}${
+        event?.key?.length === 1 ? event?.key : ''
+      }`,
     });
     // if (event.key === 'Enter' && !event.shiftKey && !this.sendMessageForm.value?.text?.trim()?.length && !this.messageFiles?.length) {
     //   //   // @ts-ignore
@@ -2476,41 +2547,46 @@ export class GuestChatComponent
       case ChatMessageType.LOCATION:
         if (!this.geolocationCurrentPosition()) {
           // Location
-          navigator.permissions
-            .query({ name: 'geolocation' })
-            .then((result) => {
-              if (result?.state !== 'granted') {
-                navigator.geolocation.getCurrentPosition(
-                  (result) => {
-                    this.geolocationCurrentPosition.set(result.coords);
-                  },
-                  (err) => {
-                    this.geolocationCurrentPosition.set(null);
-                  }
-                );
-              } else {
-                navigator.geolocation.getCurrentPosition(
-                  (result) => {
-                    this.geolocationCurrentPosition.set(result.coords);
-                  },
-                  (err) => {
-                    this.geolocationCurrentPosition.set(null);
-                  }
-                );
-              }
-            });
+          navigator.permissions.query({ name: 'geolocation' }).then(result => {
+            if (result?.state !== 'granted') {
+              navigator.geolocation.getCurrentPosition(
+                result => {
+                  this.geolocationCurrentPosition.set(result.coords);
+                },
+                err => {
+                  this.geolocationCurrentPosition.set(null);
+                }
+              );
+            } else {
+              navigator.geolocation.getCurrentPosition(
+                result => {
+                  this.geolocationCurrentPosition.set(result.coords);
+                },
+                err => {
+                  this.geolocationCurrentPosition.set(null);
+                }
+              );
+            }
+          });
         }
 
-        const _locationMessage = `https://www.google.com/maps/place/${this.geolocationCurrentPosition().longitude
-          },${this.geolocationCurrentPosition().latitude}`;
+        const _locationMessage = `https://www.google.com/maps/place/${
+          this.geolocationCurrentPosition().longitude
+        },${this.geolocationCurrentPosition().latitude}`;
         args = {
           conversationId: this.conversationSelected().id,
           message: _locationMessage,
           type: ChatMessageType.LOCATION,
           hasLink: true,
-          urlHTML: urlModify(_locationMessage, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>'),
+          urlHTML: urlModify(
+            _locationMessage,
+            this.commonService.smallScreen()
+          ).replace(/\r?\n/g, '<br>'),
           innerHTML: this.sanitizer.bypassSecurityTrustHtml(
-            urlModify(_locationMessage, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
+            urlModify(
+              _locationMessage,
+              this.commonService.smallScreen()
+            ).replace(/\r?\n/g, '<br>')
           ),
         };
         break;
@@ -2557,12 +2633,21 @@ export class GuestChatComponent
             // format gửi tin nhắn
             args = {
               ...args,
-              message: _message?.replace(/\u0000/g, ' ')?.replace('\u00A0', ' ').replace(/\r?\n/g, '<br>'),
+              message: _message
+                ?.replace(/\u0000/g, ' ')
+                ?.replace('\u00A0', ' ')
+                .replace(/\r?\n/g, '<br>'),
               hasMention: hasMention,
               hasLink: urlVerify(_message),
-              urlHTML: urlModify(_message, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>'),
+              urlHTML: urlModify(
+                _message,
+                this.commonService.smallScreen()
+              ).replace(/\r?\n/g, '<br>'),
               innerHTML: this.sanitizer.bypassSecurityTrustHtml(
-                urlModify(_message, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
+                urlModify(_message, this.commonService.smallScreen()).replace(
+                  /\r?\n/g,
+                  '<br>'
+                )
               ),
             };
           }
@@ -2621,26 +2706,31 @@ export class GuestChatComponent
       };
       if (args?.hasMention) {
         // const _message = _newMessage.message.replace(/\r?\n/g, '<br>');
-        const _messageMention = _newMessage.message.replace(
-          this.mentionRegex,
-          (match: any) => {
+        const _messageMention = _newMessage.message
+          .replace(this.mentionRegex, (match: any) => {
             const mentionUser = this.conversationSelected()?.members?.find(
               (item: any) => `[@${item.user.id}]` === match
             );
             return match !== '[@all]'
               ? `<span class="mention no-underline text-blue-300-chat owner-color cursor-pointer"` +
-              `data-id="${mentionUser?.id}" data-fullname="${mentionUser?.fullname}">` +
-              `@${mentionUser?.user?.fullname || ''}</span>`
+                  `data-id="${mentionUser?.id}" data-fullname="${mentionUser?.fullname}">` +
+                  `@${mentionUser?.user?.fullname || ''}</span>`
               : `<span class="mention no-underline text-blue-300-chat owner-color cursor-pointer"` +
-              `data-id="all" data-fullname="Tất cả">` +
-              `@All</span>`;
-          }
-        ).replace(/\r?\n/g, '<br>');
+                  `data-id="all" data-fullname="Tất cả">` +
+                  `@All</span>`;
+          })
+          .replace(/\r?\n/g, '<br>');
         _newMessage = {
           ..._newMessage,
-          mentionHTML: urlModify(_messageMention, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>'),
+          mentionHTML: urlModify(
+            _messageMention,
+            this.commonService.smallScreen()
+          ).replace(/\r?\n/g, '<br>'),
           innerHTML: this.sanitizer.bypassSecurityTrustHtml(
-            urlModify(_messageMention, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
+            urlModify(
+              _messageMention,
+              this.commonService.smallScreen()
+            ).replace(/\r?\n/g, '<br>')
           ),
         };
       }
@@ -2690,7 +2780,7 @@ export class GuestChatComponent
           message: format(new Date(), 'dd/MM/yyyy'),
           firstMessage: false,
         };
-        this.conversationSelected.update((currValue) =>
+        this.conversationSelected.update(currValue =>
           Object.assign({}, currValue, {
             messages: [
               ...currValue.messages,
@@ -2700,7 +2790,7 @@ export class GuestChatComponent
           })
         );
       } else {
-        this.conversationSelected.update((currValue) =>
+        this.conversationSelected.update(currValue =>
           Object.assign({}, currValue, {
             messages: [...currValue.messages, ..._newMessages],
           })
@@ -2804,7 +2894,7 @@ export class GuestChatComponent
               responseMediaMessage
             );
           },
-          error: (err: any) => { },
+          error: (err: any) => {},
         });
         this.messageFiles = [];
       }
@@ -2846,7 +2936,7 @@ export class GuestChatComponent
                   responseFileMessage
                 );
               },
-              (err: any) => { }
+              (err: any) => {}
             );
           this.sendMessageForm.controls['file'].reset();
           break;
@@ -2866,13 +2956,13 @@ export class GuestChatComponent
         id: conversationId,
         tempId: null,
       };
-      this.conversationSelected.update((value) =>
+      this.conversationSelected.update(value =>
         Object.assign({}, value, {
           id: conversationId,
           tempId: null,
         })
       );
-      this.conversations.update((value) => [..._conversations]);
+      this.conversations.update(value => [..._conversations]);
       this.websocketService.emit('conversation:joined', {
         conversationId: conversationId,
       });
@@ -2923,7 +3013,7 @@ export class GuestChatComponent
         };
       }
     }
-    this.conversationSelected.update((currValue) =>
+    this.conversationSelected.update(currValue =>
       Object.assign({}, currValue, {
         messages: _messages,
       })
@@ -2974,11 +3064,20 @@ export class GuestChatComponent
   }
 
   // Mention cho web và mentiontoken trên mobile
-  onMentionMember(event: any, element: any = null, isEdit: boolean = false): boolean {
+  onMentionMember(
+    event: any,
+    element: any = null,
+    isEdit: boolean = false
+  ): boolean {
     const editElement = isEdit
-    ? document.getElementById(`${this.editMessageSelected().id}_editMessage`)
-    : document.querySelector('[contenteditable]') as HTMLElement;
-    if (event?.key === '@' || (typeof event === 'string' && event?.includes('@') && event?.trim().length === 1)) {
+      ? document.getElementById(`${this.editMessageSelected().id}_editMessage`)
+      : (document.querySelector('[contenteditable]') as HTMLElement);
+    if (
+      event?.key === '@' ||
+      (typeof event === 'string' &&
+        event?.includes('@') &&
+        event?.trim().length === 1)
+    ) {
       const _mentionMembers = [
         {
           user: {
@@ -2987,14 +3086,14 @@ export class GuestChatComponent
           },
         },
         ...(this.conversationSelected()?.members || []),
-      ]
+      ];
       this.activeSuggestionIndex = 0;
-      if (isEdit){
+      if (isEdit) {
         this.editMessageMentionMembers.set(_mentionMembers);
         this.autocompleteEditMessageTrigger?.openPanel();
-      }else{
-          this.mentionMembers.set(_mentionMembers);
-          this.autocompleteTrigger.openPanel();
+      } else {
+        this.mentionMembers.set(_mentionMembers);
+        this.autocompleteTrigger.openPanel();
       }
       return true;
     }
@@ -3010,15 +3109,21 @@ export class GuestChatComponent
       case 'Space':
         requestAnimationFrame(() => {
           const info = logCaretPosition(editElement);
-          const fullname = info?.span?.getAttribute('data-fullname')
-          if (fullname?.length && ((info?.offset ?? 0) >= (fullname?.length ?? 0)) ||
-                (info?.absPos ?? 0) > (fullname?.length ?? 0)) {
+          const fullname = info?.span?.getAttribute('data-fullname');
+          if (
+            (fullname?.length &&
+              (info?.offset ?? 0) >= (fullname?.length ?? 0)) ||
+            (info?.absPos ?? 0) > (fullname?.length ?? 0)
+          ) {
             const parent = info?.span?.parentNode;
             if (parent) {
               const t = document.createTextNode('\u200B');
               parent.insertBefore(t, null);
               const r = document.createRange();
-              r.setStart(t, Math.max(0, Math.min(t.length ?? 0, t.data.length)));
+              r.setStart(
+                t,
+                Math.max(0, Math.min(t.length ?? 0, t.data.length))
+              );
               r.collapse(true);
               const sel = window.getSelection();
               sel?.removeAllRanges();
@@ -3026,21 +3131,27 @@ export class GuestChatComponent
               parent.normalize();
             }
           }
-        })
+        });
         break;
       case 'ArrowLeft':
       case 'ArrowRight':
         requestAnimationFrame(() => {
           const info = logCaretPosition(editElement);
-          const fullname = info?.span?.getAttribute('data-fullname')
-          if (fullname?.length && ((info?.offset ?? 0) >= (fullname?.length ?? 0)) ||
-                (info?.absPos ?? 0) > (fullname?.length ?? 0)) {
+          const fullname = info?.span?.getAttribute('data-fullname');
+          if (
+            (fullname?.length &&
+              (info?.offset ?? 0) >= (fullname?.length ?? 0)) ||
+            (info?.absPos ?? 0) > (fullname?.length ?? 0)
+          ) {
             const parent = info?.span?.parentNode;
             if (parent) {
               const t = document.createTextNode('\u200B');
               parent.insertBefore(t, null);
               const r = document.createRange();
-              r.setStart(t, Math.max(0, Math.min(t.length ?? 0, t.data.length)));
+              r.setStart(
+                t,
+                Math.max(0, Math.min(t.length ?? 0, t.data.length))
+              );
               r.collapse(true);
               const sel = window.getSelection();
               sel?.removeAllRanges();
@@ -3048,13 +3159,16 @@ export class GuestChatComponent
               parent.normalize();
             }
           }
-        })
+        });
         break;
     }
 
     this.sendMessageTextChangeBehavior.next(element?.textContent || '');
 
-    if (this.autocompleteTrigger?.panelOpen || this.autocompleteEditMessageTrigger?.panelOpen) {
+    if (
+      this.autocompleteTrigger?.panelOpen ||
+      this.autocompleteEditMessageTrigger?.panelOpen
+    ) {
       switch (event?.key) {
         // case 'Space':
         case 'Escape':
@@ -3064,14 +3178,23 @@ export class GuestChatComponent
         case 'ArrowDown':
           event.preventDefault();
           this.activeSuggestionIndex =
-            (this.activeSuggestionIndex + 1) % (isEdit ? this.editMessageMentionMembers().length : this.mentionMembers().length);
+            (this.activeSuggestionIndex + 1) %
+            (isEdit
+              ? this.editMessageMentionMembers().length
+              : this.mentionMembers().length);
           this.scrollActiveIntoView();
           return true;
         case 'ArrowUp':
           event.preventDefault();
           this.activeSuggestionIndex =
-            (this.activeSuggestionIndex - 1 + (isEdit ? this.editMessageMentionMembers().length : this.mentionMembers().length)) %
-            (isEdit ? this.editMessageMentionMembers().length : this.mentionMembers().length);
+            (this.activeSuggestionIndex -
+              1 +
+              (isEdit
+                ? this.editMessageMentionMembers().length
+                : this.mentionMembers().length)) %
+            (isEdit
+              ? this.editMessageMentionMembers().length
+              : this.mentionMembers().length);
           this.scrollActiveIntoView();
           return true;
         case 'Enter':
@@ -3102,14 +3225,21 @@ export class GuestChatComponent
     }
     if (mention?.length > 1 && mention.startsWith('@')) {
       const _mentionMembers =
-        this.conversationSelected()?.members?.filter((item: any) =>
-          `${item?.user?.fullname?.toLowerCase()}`.includes(_.cloneDeep(mention)?.replace('@', '')?.toLowerCase()) ||
-          removeVietnameseTones(`${item?.user?.fullname?.toLowerCase()}`).includes(removeVietnameseTones(_.cloneDeep(mention)?.replace('@', '')?.toLowerCase()))
+        this.conversationSelected()?.members?.filter(
+          (item: any) =>
+            `${item?.user?.fullname?.toLowerCase()}`.includes(
+              _.cloneDeep(mention)?.replace('@', '')?.toLowerCase()
+            ) ||
+            removeVietnameseTones(
+              `${item?.user?.fullname?.toLowerCase()}`
+            ).includes(
+              removeVietnameseTones(
+                _.cloneDeep(mention)?.replace('@', '')?.toLowerCase()
+              )
+            )
         ) || [];
-      if (isEdit)
-        this.editMessageMentionMembers.set(_mentionMembers);
-      else
-        this.mentionMembers.set(_mentionMembers);
+      if (isEdit) this.editMessageMentionMembers.set(_mentionMembers);
+      else this.mentionMembers.set(_mentionMembers);
     } else if (mention?.length === 1 && mention.startsWith('@')) {
       const _mentionMembers = [
         {
@@ -3120,27 +3250,25 @@ export class GuestChatComponent
         },
         ...(this.conversationSelected()?.members || []),
       ];
-      if (isEdit)
-        this.editMessageMentionMembers.set(_mentionMembers);
-      else
-        this.mentionMembers.set(_mentionMembers);
+      if (isEdit) this.editMessageMentionMembers.set(_mentionMembers);
+      else this.mentionMembers.set(_mentionMembers);
     } else {
-      this.mentionMembers.set([])
-      this.editMessageMentionMembers.set([])
+      this.mentionMembers.set([]);
+      this.editMessageMentionMembers.set([]);
     }
-    if ((!this.mentionMembers()?.length && !isEdit) 
-      || (!this.editMessageMentionMembers()?.length && isEdit) 
-      || !mention?.length 
-      || !element?.textContent?.trim().length) {
+    if (
+      (!this.mentionMembers()?.length && !isEdit) ||
+      (!this.editMessageMentionMembers()?.length && isEdit) ||
+      !mention?.length ||
+      !element?.textContent?.trim().length
+    ) {
       this.autocompleteTrigger.closePanel();
       this.autocompleteEditMessageTrigger?.closePanel();
     } else {
-      if (!this.autocompleteTrigger.panelOpen && mention.startsWith('@')){
+      if (!this.autocompleteTrigger.panelOpen && mention.startsWith('@')) {
         this.activeSuggestionIndex = 0;
-        if (isEdit)
-          this.autocompleteEditMessageTrigger?.openPanel();
-        else
-          this.autocompleteTrigger.openPanel();
+        if (isEdit) this.autocompleteEditMessageTrigger?.openPanel();
+        else this.autocompleteTrigger.openPanel();
       }
     }
     return false;
@@ -3166,12 +3294,19 @@ export class GuestChatComponent
     insertSpaceEscapingElementAtCaret('\u00A0');
   }
 
-  onReRenderMessage(lengthRegex: number = 0, deleteMention: any = null, isEdit: boolean = false) {
-    const _mentionMembers = isEdit ? this.editMessageMentionMembers() : this.mentionMembers();
+  onReRenderMessage(
+    lengthRegex: number = 0,
+    deleteMention: any = null,
+    isEdit: boolean = false
+  ) {
+    const _mentionMembers = isEdit
+      ? this.editMessageMentionMembers()
+      : this.mentionMembers();
     if (!deleteMention) {
       const anchor = document.createElement('span');
-      anchor.textContent = `@${_mentionMembers[this.activeSuggestionIndex].user?.fullname
-        }`;
+      anchor.textContent = `@${
+        _mentionMembers[this.activeSuggestionIndex].user?.fullname
+      }`;
       anchor.dataset['id'] =
         _mentionMembers[this.activeSuggestionIndex].user?.id;
       anchor.dataset['fullname'] =
@@ -3219,7 +3354,10 @@ export class GuestChatComponent
     selection?.addRange(range as Range);
 
     // Loại bỏ span rỗng
-    const spans2 = Array.from(document.querySelector('[contenteditable]')?.querySelectorAll('span') || []);
+    const spans2 = Array.from(
+      document.querySelector('[contenteditable]')?.querySelectorAll('span') ||
+        []
+    );
     for (const sp of spans2) {
       if (sp.childElementCount === 0 && sp.textContent?.trim().length === 0) {
         sp.remove();
@@ -3248,12 +3386,12 @@ export class GuestChatComponent
         (textWidth > this.widthCompare || elemBrs?.length)) ||
       elemImages?.length
     ) {
-      this.conversationSelected.update((value) =>
+      this.conversationSelected.update(value =>
         Object.assign({}, value, { multipleLineTextbox: true })
       );
       this.cdr.detectChanges();
     } else {
-      this.conversationSelected.update((value) =>
+      this.conversationSelected.update(value =>
         Object.assign({}, value, { multipleLineTextbox: false })
       );
       if (!elemP.innerText?.trim()?.length) {
@@ -3265,7 +3403,11 @@ export class GuestChatComponent
   }
 
   onShowMessageAction(item: any) {
-    if (item.type === MessageViewType.DATE_GROUP || item.type === ChatMessageType.LOG) return;
+    if (
+      item.type === MessageViewType.DATE_GROUP ||
+      item.type === ChatMessageType.LOG
+    )
+      return;
     this.messageHover.update(() => item);
     if (item?.isEdit) return;
     if (this.messageActionOverlayRef) {
@@ -3307,30 +3449,42 @@ export class GuestChatComponent
     // );
     // const textWidth = this.myCanvasContext.measureText(message).width;
     const position: any = this.commonService.smallScreen()
-      ? [
-        {
-          originX: 'center',
-          originY: 'bottom',
-          overlayX: 'center',
-          overlayY: 'top',
-          offsetY: 4,
-        }
-      ]
-      : item.role === MessageRole.OWNER ? [
-        {
-          originX: 'start',
-          originY: 'bottom',
-          overlayX: 'end',
-          overlayY: 'bottom'
-        }
-      ] : [
-        {
-          originX: 'end',
-          originY: 'bottom',
-          overlayX: 'start',
-          overlayY: 'bottom'
-        }
-      ]
+      ? item.role === MessageRole.OWNER
+        ? [
+            {
+              originX: 'end',
+              originY: 'bottom',
+              overlayX: 'end',
+              overlayY: 'top',
+              offsetY: 4,
+            },
+          ]
+        : [
+            {
+              originX: 'start',
+              originY: 'bottom',
+              overlayX: 'start',
+              overlayY: 'top',
+              offsetY: 4,
+            },
+          ]
+      : item.role === MessageRole.OWNER
+        ? [
+            {
+              originX: 'start',
+              originY: 'bottom',
+              overlayX: 'end',
+              overlayY: 'bottom',
+            },
+          ]
+        : [
+            {
+              originX: 'end',
+              originY: 'bottom',
+              overlayX: 'start',
+              overlayY: 'bottom',
+            },
+          ];
     const positionStrategy = this.overlay
       .position()
       .flexibleConnectedTo(
@@ -3346,7 +3500,7 @@ export class GuestChatComponent
       backdropClass: 'cdk-overlay-transparent-backdrop',
       positionStrategy,
       scrollStrategy: this.overlay.scrollStrategies.reposition(),
-      panelClass: 'msg-overlay-pane'
+      panelClass: 'msg-overlay-pane',
     });
     const portal = new TemplatePortal(
       this.messageActionTemplate,
@@ -3356,7 +3510,7 @@ export class GuestChatComponent
     this.messageActionOverlayRef.attach(portal);
     if (!this.commonService.smallScreen()) {
       this.messageActionOverlayRefOutsidePointerEvents =
-        this.messageActionOverlayRef.outsidePointerEvents().subscribe((value) => {
+        this.messageActionOverlayRef.outsidePointerEvents().subscribe(value => {
           setTimeout(() => {
             this.onCloseMessageAction(item);
           });
@@ -3364,7 +3518,7 @@ export class GuestChatComponent
         });
     } else {
       this.messageActionOverlayRefOutsidePointerEvents =
-        this.messageActionOverlayRef.backdropClick().subscribe((value) => {
+        this.messageActionOverlayRef.backdropClick().subscribe(value => {
           setTimeout(() => {
             this.onCloseMessageAction(item);
           });
@@ -3518,7 +3672,7 @@ export class GuestChatComponent
         (mess: any) => mess.id === args.messageId
       );
       _messages[_messageIndex].reactions = response?.reactions;
-      this.conversationSelected.update((currValue) =>
+      this.conversationSelected.update(currValue =>
         Object.assign({}, currValue, {
           messages: _messages,
         })
@@ -3565,7 +3719,7 @@ export class GuestChatComponent
     this.messageSendEmojiOverlayRefOutsidePointerEvents =
       this.messageSendEmojiOverlayRef
         .outsidePointerEvents()
-        .subscribe((value) => {
+        .subscribe(value => {
           this.onCloseMessageAction(null);
           this.messageSendEmojiOverlayRefOutsidePointerEvents.unsubscribe();
         });
@@ -3611,7 +3765,7 @@ export class GuestChatComponent
       (item: any) => item.id === userSelected.id
     );
     if (!findUser) {
-      this.forwardUsers.update((value) => [...(value || []), userSelected]);
+      this.forwardUsers.update(value => [...(value || []), userSelected]);
     }
     this.forwardMessageForm.controls['keyword'].reset();
   }
@@ -3619,7 +3773,7 @@ export class GuestChatComponent
   onRemoveForwardUser(index: number) {
     const _forwardUsers = _.cloneDeep(this.forwardUsers());
     _forwardUsers.splice(index, 1);
-    this.forwardUsers.update((value) => [..._forwardUsers]);
+    this.forwardUsers.update(value => [..._forwardUsers]);
   }
 
   /** Reply message */
@@ -3673,12 +3827,12 @@ export class GuestChatComponent
           _messages[messageHoverIndex + 1]?.role === MessageRole.OWNER &&
           (_messages[messageHoverIndex - 1]?.role !== MessageRole.OWNER ||
             _messages[messageHoverIndex - 1]?.type ===
-            MessageViewType.DATE_GROUP)
+              MessageViewType.DATE_GROUP)
         )
           _messages[messageHoverIndex + 1].firstMessage = true;
         _messages.splice(messageHoverIndex, 1);
         const lastMessage: any = _.last(_messages);
-        this.conversationSelected.update((currValue) =>
+        this.conversationSelected.update(currValue =>
           Object.assign({}, currValue, {
             messages:
               lastMessage?.type === MessageViewType.DATE_GROUP
@@ -3711,11 +3865,12 @@ export class GuestChatComponent
           ..._messages[messageHoverIndex],
           isEdit: true,
           messageEdited: _messageMention,
-          mentionHTML: _messages[messageHoverIndex].mentionHTML 
-            || _messages[messageHoverIndex].urlHTML 
-            || _messages[messageHoverIndex].message,
+          mentionHTML:
+            _messages[messageHoverIndex].mentionHTML ||
+            _messages[messageHoverIndex].urlHTML ||
+            _messages[messageHoverIndex].message,
         };
-        this.conversationSelected.update((currValue) =>
+        this.conversationSelected.update(currValue =>
           Object.assign({}, currValue, {
             messages: _messages,
           })
@@ -3746,8 +3901,12 @@ export class GuestChatComponent
       (item: any) => item.id === message.id
     );
     const _hasLink = urlVerify(_messages[messageEditIndex].mentionHTML);
-    const mentions = extractMentionSpans(_messages[messageEditIndex].mentionHTML);
-    const _messageEdited = replaceMentionSpansWithTokens(_messages[messageEditIndex].mentionHTML);
+    const mentions = extractMentionSpans(
+      _messages[messageEditIndex].mentionHTML
+    );
+    const _messageEdited = replaceMentionSpansWithTokens(
+      _messages[messageEditIndex].mentionHTML
+    );
     if (isSave) {
       this.isUpdateEditMessageSelected.set(true);
       _messages[messageEditIndex] = {
@@ -3756,7 +3915,10 @@ export class GuestChatComponent
         hasLink: _hasLink,
         hasMention: !!mentions?.length,
         innerHTML: this.sanitizer.bypassSecurityTrustHtml(
-          urlModify(_messages[messageEditIndex].mentionHTML, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
+          urlModify(
+            _messages[messageEditIndex].mentionHTML,
+            this.commonService.smallScreen()
+          ).replace(/\r?\n/g, '<br>')
         ),
         message: _messageEdited,
       };
@@ -3767,7 +3929,10 @@ export class GuestChatComponent
         message: _messageEdited,
       });
     } else {
-      const innerHTMLString = this.sanitizer.sanitize(SecurityContext.HTML, _messages[messageEditIndex].innerHTML);
+      const innerHTMLString = this.sanitizer.sanitize(
+        SecurityContext.HTML,
+        _messages[messageEditIndex].innerHTML
+      );
       _messages[messageEditIndex] = {
         ..._messages[messageEditIndex],
         messageEdited: _messages[messageEditIndex].message,
@@ -3776,7 +3941,7 @@ export class GuestChatComponent
       };
     }
     this.isUpdateEditMessageSelected.set(false);
-    this.conversationSelected.update((currValue) =>
+    this.conversationSelected.update(currValue =>
       Object.assign({}, currValue, {
         messages: _messages,
       })
@@ -3860,11 +4025,14 @@ export class GuestChatComponent
           ..._messages[messageEditIndex],
           hasLink: true,
           innerHTML: this.sanitizer.bypassSecurityTrustHtml(
-            urlModify(_messages[messageEditIndex].messageEdited, this.commonService.smallScreen()).replace(/\r?\n/g, '<br>')
+            urlModify(
+              _messages[messageEditIndex].messageEdited,
+              this.commonService.smallScreen()
+            ).replace(/\r?\n/g, '<br>')
           ),
         };
     }
-    this.conversationSelected.update((currValue) =>
+    this.conversationSelected.update(currValue =>
       Object.assign({}, currValue, {
         messages: _messages,
       })
@@ -3873,14 +4041,11 @@ export class GuestChatComponent
   }
 
   onHtmlChange(event: any) {
-    this.onMentionMember(event, 
-      document.getElementById(event.target.id),
-      true
-    );
+    this.onMentionMember(event, document.getElementById(event.target.id), true);
   }
 
   onMentions(event: any) {
-    console.log('onMentions',event);
+    console.log('onMentions', event);
   }
 
   searchUsers = (q: string): Observable<MentionUser[]> => {
@@ -3889,7 +4054,9 @@ export class GuestChatComponent
       { id: '2', fullname: 'Trần Thị B' },
       { id: '3', fullname: 'Lê C' },
     ];
-    const res = all.filter(u => u.fullname.toLowerCase().includes(q.toLowerCase()));
+    const res = all.filter(u =>
+      u.fullname.toLowerCase().includes(q.toLowerCase())
+    );
     return of(res).pipe(delay(80));
   };
   /** Leave group */
@@ -3919,7 +4086,7 @@ export class GuestChatComponent
           );
           if (conversationIndex !== -1)
             conversations.splice(conversationIndex, 1);
-          this.conversations.update((value) => [
+          this.conversations.update(value => [
             {
               ...conversationDetail,
               unreadCount: signal(
@@ -3977,7 +4144,7 @@ export class GuestChatComponent
       case MessageMemberAction.ASSIGN_ADMIN:
       case MessageMemberAction.REMOVE_ADMIN:
         response = await this.guestService.conversationGroupEdit(args);
-        this.conversationSelected.update((value) =>
+        this.conversationSelected.update(value =>
           Object.assign({}, value, {
             members: response.members,
           })
@@ -4011,8 +4178,8 @@ export class GuestChatComponent
       ...filter,
       from: this.conversationSelectedFilterForm.value['startAt']
         ? startOfDay(
-          new Date(this.conversationSelectedFilterForm.value['startAt'])
-        ).getTime()
+            new Date(this.conversationSelectedFilterForm.value['startAt'])
+          ).getTime()
         : loadMore
           ? this.messageSearchFilter()?.from
             ? this.messageSearchFilter()?.from
@@ -4020,8 +4187,8 @@ export class GuestChatComponent
           : null,
       to: this.conversationSelectedFilterForm.value['endAt']
         ? endOfDay(
-          new Date(this.conversationSelectedFilterForm.value['endAt'])
-        ).getTime()
+            new Date(this.conversationSelectedFilterForm.value['endAt'])
+          ).getTime()
         : loadMore
           ? this.messageSearchFilter()?.to
             ? this.messageSearchFilter()?.to
@@ -4064,7 +4231,7 @@ export class GuestChatComponent
         ...filter,
         senderIds: this.conversationSelectedFilterForm.value['senderId'],
       };
-    this.searchByDate.update((value) => false);
+    this.searchByDate.update(value => false);
     this.isSearching.set(true);
     if (
       filter.keyword?.length &&
@@ -4078,7 +4245,7 @@ export class GuestChatComponent
       };
       this.commonService.setRemoveShowGlobalLoading(true);
       const response = await this.guestService.chatMessageSearch(filter);
-      this.messageSearchFilter.update((value) =>
+      this.messageSearchFilter.update(value =>
         Object.assign({}, value, {
           from: startOfDay(
             addDays(new Date(_.last<any>(response)?.createdAt), 1)
@@ -4106,7 +4273,7 @@ export class GuestChatComponent
       });
       const _messageFlatten =
         response?.messages?.reduce((arr: any, message) => {
-          const urlFlatten = message.urls?.map((_url) => {
+          const urlFlatten = message.urls?.map(_url => {
             return {
               url: _url,
               ...message,
@@ -4115,7 +4282,7 @@ export class GuestChatComponent
           arr.push(...(urlFlatten || []));
           return arr;
         }, []) || [];
-      const groupByDate = _.groupBy(_messageFlatten, (value) =>
+      const groupByDate = _.groupBy(_messageFlatten, value =>
         format(value.createdAt, 'dd/MM/yyyy')
       );
       const _groupByDateParse = Object.keys(groupByDate)
@@ -4124,7 +4291,7 @@ export class GuestChatComponent
           const dateB = new Date(b.split('/').reverse().join('-'));
           return dateB.getTime() - dateA.getTime();
         })
-        .map((key) => {
+        .map(key => {
           return {
             date: key,
             messages: groupByDate[key],
@@ -4171,11 +4338,15 @@ export class GuestChatComponent
     const messElement = document.getElementById(`parent_${mess.id}`);
     if (messElement) {
       document
-        .getElementById(this.commonService.smallScreen() ? 'mobile_messageDiv' : 'messageDiv')
+        .getElementById(
+          this.commonService.smallScreen() ? 'mobile_messageDiv' : 'messageDiv'
+        )
         ?.scrollTo(0, messElement.offsetTop - 100);
     } else {
       document
-        .getElementById(this.commonService.smallScreen() ? 'mobile_messageDiv' : 'messageDiv')
+        .getElementById(
+          this.commonService.smallScreen() ? 'mobile_messageDiv' : 'messageDiv'
+        )
         ?.scrollTo(0, 0);
     }
   }
@@ -4248,8 +4419,8 @@ export class GuestChatComponent
     }>();
     const uniqueNames = new Set<string>();
 
-    reactions.forEach((reaction) => {
-      reaction.reactors.forEach((reactor) => {
+    reactions.forEach(reaction => {
+      reaction.reactors.forEach(reactor => {
         uniqueNames.add(reactor.fullname);
         allNames.add({
           fullname: reactor.fullname,
@@ -4280,7 +4451,7 @@ export class GuestChatComponent
       this.reactionDetails.set(this.reactionDetailsOrigin());
     } else {
       this.reactionDetails.set(
-        this.reactionDetailsOrigin().filter((item) => item.code === code)
+        this.reactionDetailsOrigin().filter(item => item.code === code)
       );
     }
   }
@@ -4315,7 +4486,7 @@ export class GuestChatComponent
       case ConversationActionType.UNPIN_MESSAGE:
         return `${senderName} đã bỏ ghim một tin nhắn trong cuộc trò chuyện.`;
       default:
-        return "Hành động không xác định.";
+        return 'Hành động không xác định.';
     }
   }
 
@@ -4330,16 +4501,16 @@ export class GuestChatComponent
           );
           return match !== '[@all]'
             ? `<span class="mention no-underline text-blue-300-chat owner-color cursor-pointer"` +
-            `data-id="${mentionUser?.user?.id}" data-fullname="${mentionUser?.user?.fullname}">` +
-            `@${mentionUser?.user?.fullname || ''}</span>`
+                `data-id="${mentionUser?.user?.id}" data-fullname="${mentionUser?.user?.fullname}">` +
+                `@${mentionUser?.user?.fullname || ''}</span>`
             : `<span class="mention no-underline text-blue-300-chat owner-color cursor-pointer"` +
-            `data-id="all" data-fullname="Tất cả">` +
-            `@All</span>`;
+                `data-id="all" data-fullname="Tất cả">` +
+                `@All</span>`;
         }
       );
-      return _messageReplyMention
+      return _messageReplyMention;
     }
-    return messageReplyOrigin
+    return messageReplyOrigin;
   }
 
   // Vị trí hiển thị tooltip
@@ -4405,7 +4576,11 @@ export class GuestChatComponent
       //   .then(blob => {
       //     saveAs(blob, item.fileName);
       //   })\
-      (window as any).flutter_inappwebview.callHandler('downloadFile', item.urls[0], item.fileName);
+      (window as any).flutter_inappwebview.callHandler(
+        'downloadFile',
+        item.urls[0],
+        item.fileName
+      );
     } else {
       // const a = document.createElement('a');
       // a.href = item.urls[0];
@@ -4430,12 +4605,12 @@ export class GuestChatComponent
 
     // nếu option nằm phía trên vùng nhìn thấy
     if (optRect.top < panelRect.top) {
-      panelEl.scrollTop += (optRect.top - panelRect.top);
+      panelEl.scrollTop += optRect.top - panelRect.top;
     }
 
     // nếu option nằm phía dưới vùng nhìn thấy
     if (optRect.bottom > panelRect.bottom) {
-      panelEl.scrollTop += (optRect.bottom - panelRect.bottom);
+      panelEl.scrollTop += optRect.bottom - panelRect.bottom;
     }
   }
 
@@ -4472,14 +4647,17 @@ export class GuestChatComponent
   }
 
   async countUnreadMessageGlobal() {
-    const unreadCount = this.conversations()?.reduce((total:number, conv:any) => {
-      if (conv?.unreadCount() > 0) total += conv?.unreadCount();
-      return total;
-    }, 0)
+    const unreadCount = this.conversations()?.reduce(
+      (total: number, conv: any) => {
+        if (conv?.unreadCount() > 0) total += conv?.unreadCount();
+        return total;
+      },
+      0
+    );
     this.commonService.messageNotification.set({
       unreadCount,
       conversationSelectedId: this.conversationSelected()?.id,
-    })
+    });
   }
 }
 

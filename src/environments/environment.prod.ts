@@ -17,5 +17,6 @@ export const environment = {
   },
   vapidKey: "BGaqz5ZBywBqvhykKVwtuoVsG5cyo6pUjGbeYdsAtWGM7NdKCANOK1KnbBEvIqupV44gS6xdwXkkeiY9eqTDl14",
   languagePrefix: 'so',
-  languageBucket: 'https://test-languages.s3.ap-southeast-1.amazonaws.com'
+  languageBucket: 'https://test-languages.s3.ap-southeast-1.amazonaws.com',
+  officeCmsUrl: 'https://office.oxiitek.com/home/guest/approval?includeHeaderLayout=false'
 };

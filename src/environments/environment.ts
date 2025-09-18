@@ -2,11 +2,12 @@ export const environment = {
   production: false,
   staging: true,
   uat: false,
-  // apiGraphQL: 'https://stg-oxiioffice-api.oxiitek.com/graphql',
-  // socketUri: 'https://stg-oxiioffice-api.oxiitek.com',
-  apiGraphQL: 'https://oxii-office-api.smarthiz.com/graphql',
-  socketUri: 'https://oxii-office-api.smarthiz.com',
+  apiGraphQL: 'https://oxii-office-api.oxiitek.com/graphql',
+  socketUri: 'https://oxii-office-api.oxiitek.com',
   apiWS: 'wss://oxii-office-api.oxiitek.com/graphql',
+  // apiGraphQL: 'https://oxii-office-api.smarthiz.com/graphql',
+  // socketUri: 'https://oxii-office-api.smarthiz.com',
+  // apiWS: 'wss://oxii-office-api.smarthiz.com/graphql',
   firebaseConfig: {
     apiKey: "AIzaSyBvTklOwhZpokeEt5Q5U7tImUF94D1xsCI",
     authDomain: "soffice-stag.firebaseapp.com",
@@ -19,7 +20,7 @@ export const environment = {
   webChat: 'https://stg-office-web-chat.smarthiz.vn',
   googleApiKey: 'AIzaSyCokjDtTndRJtY-4tnXmGgC9ysIN-o1zv0',
   languagePrefix: 'so',
-  languageBucket: 'https://test-languages.s3.ap-southeast-1.amazonaws.com'
+  languageBucket: 'https://test-languages.s3.ap-southeast-1.amazonaws.com',
   // staging: false,
   // uat: false,
   // apiGraphQL: 'https://oxii-office-api.oxiitek.com/graphql',
@@ -35,5 +36,6 @@ export const environment = {
   // },
   // vapidKey: "BGaqz5ZBywBqvhykKVwtuoVsG5cyo6pUjGbeYdsAtWGM7NdKCANOK1KnbBEvIqupV44gS6xdwXkkeiY9eqTDl14",
   // languagePrefix: 'so',
-  // languageBucket: 'https://test-languages.s3.ap-southeast-1.amazonaws.com'
+  // languageBucket: 'https://test-languages.s3.ap-southeast-1.amazonaws.com',
+  officeCmsUrl: 'http://192.168.2.98:4200/home/guest/approval?includeHeaderLayout=false'
 };
